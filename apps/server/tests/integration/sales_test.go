@@ -181,4 +181,92 @@ func TestSalesFlow(t *testing.T) {
 	// 5. Verify Stock Reverted (Should be 8 + 2 = 10)
 	database.DB.First(&product, "id = ?", prodResp.ID)
 	assert.Equal(t, float64(10), product.Quantity)
+
+	// 6. Test Supermarket Workflow: Fast Customer Creation during Checkout
+	checkReq2 := sales.CheckoutRequest{
+		Items: []sales.CartItem{
+			{ProductID: prodResp.ID, Quantity: 1},
+		},
+		PaymentMethod: "CASH",
+		CustomerPhone: "0241111111",
+		CustomerName:  "Supermarket Customer",
+	}
+	jsonBytes, _ = json.Marshal(checkReq2)
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/sales/checkout", bytes.NewBuffer(jsonBytes))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	// Verify Customer was created
+	var cust1 models.Customer
+	err := database.DB.Where("phone_number = ?", "0241111111").First(&cust1).Error
+	assert.NoError(t, err)
+	assert.Equal(t, "Supermarket Customer", cust1.FullName)
+	assert.Equal(t, 1, cust1.TotalOrders)
+
+	// 7. Test Lookup by Name Only
+	checkReq3 := sales.CheckoutRequest{
+		Items: []sales.CartItem{
+			{ProductID: prodResp.ID, Quantity: 1},
+		},
+		PaymentMethod: "CASH",
+		CustomerName:  "Supermarket Customer", // Existing name, no phone
+	}
+	jsonBytes, _ = json.Marshal(checkReq3)
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/sales/checkout", bytes.NewBuffer(jsonBytes))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	// Verify same customer was used (TotalOrders should be 2)
+	database.DB.First(&cust1, "id = ?", cust1.ID)
+	assert.Equal(t, 2, cust1.TotalOrders)
+
+	// 8. Test Update Name when Phone matches
+	checkReq4 := sales.CheckoutRequest{
+		Items: []sales.CartItem{
+			{ProductID: prodResp.ID, Quantity: 1},
+		},
+		PaymentMethod: "CASH",
+		CustomerPhone: "0241111111",
+		CustomerName:  "Updated Name",
+	}
+	jsonBytes, _ = json.Marshal(checkReq4)
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/sales/checkout", bytes.NewBuffer(jsonBytes))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	// Verify name was updated
+	database.DB.First(&cust1, "id = ?", cust1.ID)
+	assert.Equal(t, "Updated Name", cust1.FullName)
+	assert.Equal(t, 3, cust1.TotalOrders)
+
+	// 9. Test Update Phone when Name matches
+	checkReq5 := sales.CheckoutRequest{
+		Items: []sales.CartItem{
+			{ProductID: prodResp.ID, Quantity: 1},
+		},
+		PaymentMethod: "CASH",
+		CustomerName:  "Updated Name",
+		CustomerPhone: "0242222222", // New phone for existing name
+	}
+	jsonBytes, _ = json.Marshal(checkReq5)
+	req, _ = http.NewRequest(http.MethodPost, "/api/v1/sales/checkout", bytes.NewBuffer(jsonBytes))
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/json")
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	// Verify phone was updated
+	database.DB.First(&cust1, "id = ?", cust1.ID)
+	assert.Equal(t, "0242222222", cust1.PhoneNumber)
+	assert.Equal(t, 4, cust1.TotalOrders)
 }

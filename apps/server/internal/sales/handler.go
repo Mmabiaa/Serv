@@ -26,12 +26,16 @@ type CheckoutRequest struct {
 	Items         []CartItem `json:"items" binding:"required,min=1"`
 	PaymentMethod string     `json:"payment_method" binding:"required,oneof=CASH MOMO CARD"`
 	CustomerID    *uuid.UUID `json:"customer_id"`
+	CustomerPhone string     `json:"customer_phone"` // For fast lookup/creation
+	CustomerName  string     `json:"customer_name"`  // Optional for creation
 	TotalDiscount float64    `json:"total_discount"`
 }
 
 type SaleResponse struct {
 	ID            uuid.UUID `json:"id"`
 	ReceiptNumber string    `json:"receipt_number"`
+	CustomerName  string    `json:"customer_name"`
+	CustomerPhone string    `json:"customer_phone"`
 	TotalAmount   float64   `json:"total_amount"`
 	SubTotal      float64   `json:"sub_total"`
 	TaxAmount     float64   `json:"tax_amount"`
@@ -120,11 +124,78 @@ func Checkout(c *gin.Context) {
 		taxAmount := subTotal * taxRate
 		finalTotal := subTotal + taxAmount
 
-		// 3. Create Sale record
+		// 3. Handle Customer Lookup/Creation/Update (Supermarket Workflow)
+		var customerID *uuid.UUID
+		customerName := req.CustomerName
+		customerPhone := req.CustomerPhone
+
+		if customerPhone != "" || customerName != "" {
+			var customer models.Customer
+
+			// Priority lookup: Phone first, then Name
+			found := false
+			if customerPhone != "" {
+				if err := tx.Where("organization_id = ? AND phone_number = ?", orgID, customerPhone).First(&customer).Error; err == nil {
+					found = true
+				}
+			}
+
+			if !found && customerName != "" {
+				if err := tx.Where("organization_id = ? AND full_name = ?", orgID, customerName).First(&customer).Error; err == nil {
+					found = true
+				}
+			}
+
+			if found {
+				// Existing Customer: Update missing or different info
+				updated := false
+				if customerName != "" && customer.FullName != customerName {
+					customer.FullName = customerName
+					updated = true
+				}
+				if customerPhone != "" && customer.PhoneNumber != customerPhone {
+					customer.PhoneNumber = customerPhone
+					updated = true
+				}
+
+				if updated {
+					if err := tx.Save(&customer).Error; err != nil {
+						return err
+					}
+				}
+				customerName = customer.FullName
+				customerPhone = customer.PhoneNumber
+			} else {
+				// New Customer: Create record
+				if customerName == "" && customerPhone != "" {
+					customerName = "Customer " + customerPhone
+				}
+
+				if customerName != "" {
+					customer = models.Customer{
+						OrganizationID: orgID.(uuid.UUID),
+						FullName:       customerName,
+						PhoneNumber:    customerPhone,
+					}
+					if err := tx.Create(&customer).Error; err != nil {
+						return err
+					}
+					found = true
+				}
+			}
+
+			if found {
+				customerID = &customer.ID
+			}
+		}
+
+		// 4. Create Sale record
 		sale = models.Sale{
 			OrganizationID: orgID.(uuid.UUID),
 			UserID:         userID.(uuid.UUID),
-			CustomerID:     req.CustomerID,
+			CustomerID:     customerID,
+			CustomerName:   customerName,
+			CustomerPhone:  customerPhone,
 			SubTotal:       subTotal,
 			TaxAmount:      taxAmount,
 			DiscountAmount: totalDiscount,
@@ -150,7 +221,21 @@ func Checkout(c *gin.Context) {
 			return err
 		}
 
-		// 5. Audit Log
+		// 5. Update Customer stats (if provided)
+		if customerID != nil {
+			var customer models.Customer
+			if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&customer, "id = ? AND organization_id = ?", customerID, orgID).Error; err == nil {
+				now := time.Now()
+				customer.TotalSpent += sale.TotalAmount
+				customer.TotalOrders += 1
+				customer.LastVisitAt = &now
+				if err := tx.Save(&customer).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		// 6. Audit Log
 		audit := models.AuditLog{
 			OrganizationID: orgID.(uuid.UUID),
 			UserID:         userID.(uuid.UUID),
@@ -172,6 +257,8 @@ func Checkout(c *gin.Context) {
 	c.JSON(http.StatusCreated, SaleResponse{
 		ID:            sale.ID,
 		ReceiptNumber: sale.ReceiptNumber,
+		CustomerName:  sale.CustomerName,
+		CustomerPhone: sale.CustomerPhone,
 		TotalAmount:   sale.TotalAmount,
 		SubTotal:      sale.SubTotal,
 		TaxAmount:     sale.TaxAmount,
@@ -290,6 +377,8 @@ type SaleItemResponse struct {
 type DetailedSaleResponse struct {
 	ID             uuid.UUID          `json:"id"`
 	ReceiptNumber  string             `json:"receipt_number"`
+	CustomerName   string             `json:"customer_name"`
+	CustomerPhone  string             `json:"customer_phone"`
 	TotalAmount    float64            `json:"total_amount"`
 	SubTotal       float64            `json:"sub_total"`
 	TaxAmount      float64            `json:"tax_amount"`
@@ -314,10 +403,10 @@ func GetSalesHistory(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	offset := (page - 1) * limit
-	
+
 	var sales []models.Sale
 	database.DB.Preload("Items").Where("organization_id = ?", orgID).Order("created_at desc").Offset(offset).Limit(limit).Find(&sales)
-	
+
 	var resp []DetailedSaleResponse
 	for _, s := range sales {
 		var items []SaleItemResponse
@@ -335,6 +424,8 @@ func GetSalesHistory(c *gin.Context) {
 		resp = append(resp, DetailedSaleResponse{
 			ID:             s.ID,
 			ReceiptNumber:  s.ReceiptNumber,
+			CustomerName:   s.CustomerName,
+			CustomerPhone:  s.CustomerPhone,
 			TotalAmount:    s.TotalAmount,
 			SubTotal:       s.SubTotal,
 			TaxAmount:      s.TaxAmount,
@@ -383,6 +474,8 @@ func GetSaleDetails(c *gin.Context) {
 	c.JSON(http.StatusOK, DetailedSaleResponse{
 		ID:             s.ID,
 		ReceiptNumber:  s.ReceiptNumber,
+		CustomerName:   s.CustomerName,
+		CustomerPhone:  s.CustomerPhone,
 		TotalAmount:    s.TotalAmount,
 		SubTotal:       s.SubTotal,
 		TaxAmount:      s.TaxAmount,

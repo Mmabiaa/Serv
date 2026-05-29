@@ -110,6 +110,42 @@ definitions:
     - email
     - otp
     type: object
+  customers.CreateCustomerRequest:
+    properties:
+      address:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      phone_number:
+        type: string
+    required:
+    - full_name
+    type: object
+  customers.CustomerResponse:
+    properties:
+      address:
+        type: string
+      balance:
+        type: number
+      created_at:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      last_visit_at:
+        type: string
+      phone_number:
+        type: string
+      total_orders:
+        type: integer
+      total_spent:
+        type: number
+    type: object
   inventory.CategoryResponse:
     properties:
       description:
@@ -237,6 +273,12 @@ definitions:
   sales.CheckoutRequest:
     properties:
       customer_id:
+        type: string
+      customer_name:
+        description: Optional for creation
+        type: string
+      customer_phone:
+        description: For fast lookup/creation
         type: string
       items:
         items:
@@ -599,6 +641,80 @@ paths:
       summary: Verify OTP and trust device
       tags:
       - auth
+  /customers:
+    get:
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Search by name, phone or email
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/customers.CustomerResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: List customers with search and pagination
+      tags:
+      - customers
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Customer details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/customers.CreateCustomerRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/customers.CustomerResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new customer
+      tags:
+      - customers
+  /customers/{id}:
+    get:
+      parameters:
+      - description: Customer ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get customer details and history
+      tags:
+      - customers
   /inventory/adjust:
     post:
       consumes:

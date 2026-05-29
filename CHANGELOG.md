@@ -42,7 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added RBAC enforcement and Audit Logging for user actions.
   - Added Pagination and Filtering for staff and activity logs.
   - Hardened security with CORS, XSS, CSP, and HSTS headers.
-  - Implemented Graceful Shutdown for operational stability.
+  - Refactored staff creation to use **GORM Transactions** for atomic data consistency.
+  - Implemented **Graceful Shutdown** to ensure no requests are lost during deployment.
 
 ## [Phase 3: Inventory Management System] - 2026-05-29
 
@@ -83,3 +84,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Full Audit Logging for every sale and void action.
   - Comprehensive integration tests for the full sales lifecycle (Register -> Stock -> Sale -> Void -> Stock Reversal).
   - Updated Swagger documentation with high-fidelity DTO responses.
+
+## [Phase 5: Customer Management] - 2026-05-29
+
+### Added
+- Implemented **Customer Management System**:
+  - `POST /api/v1/customers`: Register new customers with full profile data.
+  - `GET /api/v1/customers`: Searchable customer directory with pagination.
+  - `GET /api/v1/customers/:id`: Detailed view including purchase history and engagement metrics.
+- **Sales Integration**:
+  - Automatically track `TotalSpent`, `TotalOrders`, and `LastVisitAt` for customers during checkout.
+  - Added optional `CustomerID` support to the Sales checkout engine.
+- **Enterprise Engineering**:
+  - Full Audit Logging for customer registration.
+  - Immutable purchase history linking sales to customer profiles.
+  - Automated integration tests for the full customer lifecycle.
+  - Updated Swagger documentation with customer DTOs.
+- **Enhanced Checkout Workflow**:
+  - Integrated "Just-in-Time" customer creation during checkout.
+  - Cashiers can now provide `customer_phone` and `customer_name` directly in the checkout request.
+  - System automatically looks up existing customers by phone or creates a new profile if not found, significantly speeding up the operational workflow.
