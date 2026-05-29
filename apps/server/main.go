@@ -17,6 +17,7 @@ import (
 	"github.com/serv/server/internal/database"
 	"github.com/serv/server/internal/inventory"
 	"github.com/serv/server/internal/middleware"
+	"github.com/serv/server/internal/reports"
 	"github.com/serv/server/internal/sales"
 	"github.com/serv/server/internal/users"
 	"github.com/serv/server/pkg"
@@ -149,6 +150,17 @@ func main() {
 			customerGroup.POST("/", customers.CreateCustomer)
 			customerGroup.GET("/", customers.ListCustomers)
 			customerGroup.GET("/:id", customers.GetCustomerDetails)
+		}
+
+		// Reporting Routes (Manager/Admin Only)
+		reportGroup := v1.Group("/reports")
+		reportGroup.Use(middleware.AuthMiddleware(), middleware.RoleMiddleware("admin", "manager"))
+		{
+			reportGroup.GET("/daily", reports.GetDailyReport)
+			reportGroup.GET("/summary", reports.GetSummaryReport)
+			reportGroup.GET("/top-products", reports.GetTopProducts)
+			reportGroup.GET("/staff-performance", reports.GetStaffPerformance)
+			reportGroup.GET("/export/sales", reports.ExportSalesReport)
 		}
 	}
 

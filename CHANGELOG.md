@@ -95,9 +95,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Sales Integration**:
   - Automatically track `TotalSpent`, `TotalOrders`, and `LastVisitAt` for customers during checkout.
   - Added optional `CustomerID` support to the Sales checkout engine.
+- **Supermarket Workflow Optimization**:
+  - Refined Checkout handler to support **Just-in-Time Customer Creation**.
+  - Priority lookup by **Phone Number** or **Full Name** during checkout.
+  - Automatic upsert of customer details if matches are found.
+  - Immutable **Receipt Snapshots**: Customer name and phone at the time of purchase are saved on the `Sale` record.
 - **Enterprise Engineering**:
   - Full Audit Logging for customer registration.
   - Immutable purchase history linking sales to customer profiles.
+  - Enhanced database indexing for fast customer lookups by name/phone.
+
+## [Phase 6: Reporting & Analytics] - 2026-05-29
+
+### Added
+- Implemented **Sales Analytics Engine**:
+  - `GET /api/v1/reports/daily`: Daily sales aggregation with multi-day history.
+  - `GET /api/v1/reports/summary`: Periodic reporting (Monthly/Yearly) with SQL-optimized aggregation.
+  - `GET /api/v1/reports/top-products`: Analytics on top-selling products by volume and revenue.
+  - `GET /api/v1/reports/staff-performance`: Performance tracking for cashiers and managers.
+- **Data Export Infrastructure**:
+  - `GET /api/v1/reports/export/sales`: High-speed CSV export of sales history for external accounting.
+  - Implemented streaming CSV generation for performance with large datasets.
+- **Security & RBAC**:
+  - Restricted all reporting endpoints to **Manager/Admin roles only**.
+  - Integrated reporting access into the global Audit Logging system.
+- **Enterprise Engineering**:
+  - Used SQL grouping and aggregation for high-performance reporting.
+  - Added comprehensive integration tests for the full reporting suite.
+  - Updated Swagger documentation for all Phase 6 endpoints.
   - Automated integration tests for the full customer lifecycle.
   - Updated Swagger documentation with customer DTOs.
 - **Enhanced Checkout Workflow**:
