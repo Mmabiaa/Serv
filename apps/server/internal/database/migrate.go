@@ -15,6 +15,9 @@ func AutoMigrate() {
 		&models.Category{},
 		&models.Product{},
 		&models.InventoryMovement{},
+		&models.Sale{},
+		&models.SaleItem{},
+		&models.Payment{},
 	)
 	if err != nil {
 		pkg.Log.Fatal("Migration failed", zap.Error(err))
