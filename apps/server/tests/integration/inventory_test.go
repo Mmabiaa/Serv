@@ -20,7 +20,7 @@ import (
 func setupInventoryTestRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	
+
 	v1 := r.Group("/api/v1")
 	{
 		authGroup := v1.Group("/auth")
@@ -84,14 +84,14 @@ func TestInventoryFlow(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	
+
 	loginReq := auth.LoginRequest{Email: "inv@test.com", Password: "password123"}
 	jsonBytes, _ = json.Marshal(loginReq)
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	
+
 	var loginResp auth.LoginResponse
 	json.Unmarshal(w.Body.Bytes(), &loginResp)
 	token := loginResp.Token
@@ -105,7 +105,7 @@ func TestInventoryFlow(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusCreated, w.Code)
-	
+
 	var catResp struct{ ID uuid.UUID }
 	json.Unmarshal(w.Body.Bytes(), &catResp)
 
@@ -124,7 +124,7 @@ func TestInventoryFlow(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusCreated, w.Code)
-	
+
 	var prodResp struct{ ID uuid.UUID }
 	json.Unmarshal(w.Body.Bytes(), &prodResp)
 
@@ -148,19 +148,19 @@ func TestInventoryFlow(t *testing.T) {
 	req.Header.Set("Authorization", "Bearer "+token)
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	
+
 	var prodList []map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &prodList)
-	assert.Equal(t, float64(100), prodList[0]["Quantity"])
+	assert.Equal(t, float64(100), prodList[0]["quantity"])
 
 	// 6. Verify Movement History
 	req, _ = http.NewRequest(http.MethodGet, "/api/v1/inventory/movements", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	
+
 	var moveList []map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &moveList)
 	assert.Len(t, moveList, 1)
-	assert.Equal(t, "IN", moveList[0]["Type"])
+	assert.Equal(t, "IN", moveList[0]["type"])
 }
