@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -69,8 +73,11 @@ func main() {
 
 	r := gin.New()
 
+	// Custom Zap middleware
 	r.Use(middleware.GinLogger())
 	r.Use(middleware.GinRecovery())
+	r.Use(middleware.CORSConfig())
+	r.Use(middleware.SecurityHeaders())
 	r.Use(middleware.RateLimitMiddleware(100, time.Minute))
 
 	// Routes
@@ -118,11 +125,37 @@ func main() {
 		port = "8080"
 	}
 
-	fmt.Println("8. Starting server on port", port)
-
-	pkg.Log.Info("Server starting", zap.String("port", port))
-
-	if err := r.Run(":" + port); err != nil {
-		pkg.Log.Fatal("Failed to start server", zap.Error(err))
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: r,
 	}
+
+	// Initializing the server in a goroutine so that
+	// it won't block the graceful shutdown handling below
+	go func() {
+		pkg.Log.Info("Server starting", zap.String("port", port))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			pkg.Log.Fatal("Failed to start server", zap.Error(err))
+		}
+	}()
+
+	// Wait for interrupt signal to gracefully shutdown the server with
+	// a timeout of 5 seconds.
+	quit := make(chan os.Signal, 1)
+	// kill (no parameter) default send syscall.SIGTERM
+	// kill -2 is syscall.SIGINT
+	// kill -9 is syscall.SIGKILL but can't be caught, so no need to add it
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	pkg.Log.Info("Shutting down server...")
+
+	// The context is used to inform the server it has 5 seconds to finish
+	// the request it is currently handling
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		pkg.Log.Fatal("Server forced to shutdown", zap.Error(err))
+	}
+
+	pkg.Log.Info("Server exiting")
 }

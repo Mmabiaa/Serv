@@ -2,6 +2,7 @@ package users
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -11,6 +12,7 @@ import (
 	"github.com/serv/server/pkg"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type CreateStaffRequest struct {
@@ -61,68 +63,107 @@ func CreateStaff(c *gin.Context) {
 	orgID, _ := c.Get("org_id")
 	adminID, _ := c.Get("user_id")
 
-	// Check if username is unique within organization
-	var existingUser models.User
-	if err := database.DB.Where("organization_id = ? AND username = ?", orgID, req.Username).First(&existingUser).Error; err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Username already exists in this organization"})
-		return
-	}
+	// Start Transaction for Atomic creation + Audit Log
+	err := database.DB.Transaction(func(tx *gorm.DB) error {
+		// Check if username is unique within organization
+		var existingUser models.User
+		if err := tx.Where("organization_id = ? AND username = ?", orgID, req.Username).First(&existingUser).Error; err == nil {
+			return gorm.ErrDuplicatedKey
+		}
 
-	// Hash PIN
-	hashedPIN, err := bcrypt.GenerateFromPassword([]byte(req.StaffPIN), bcrypt.DefaultCost)
-	if err != nil {
-		pkg.Log.Error("failed to hash staff PIN", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-		return
-	}
+		// Hash PIN
+		hashedPIN, err := bcrypt.GenerateFromPassword([]byte(req.StaffPIN), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
 
-	staff := models.User{
-		OrganizationID: orgID.(uuid.UUID),
-		FullName:       req.FullName,
-		Username:       req.Username,
-		PhoneNumber:    req.PhoneNumber,
-		Email:          req.Email,
-		PIN:            string(hashedPIN),
-		Role:           req.Role,
-		IsActive:       true,
-	}
+		staff := models.User{
+			OrganizationID: orgID.(uuid.UUID),
+			FullName:       req.FullName,
+			Username:       req.Username,
+			PhoneNumber:    req.PhoneNumber,
+			Email:          req.Email,
+			PIN:            string(hashedPIN),
+			Role:           req.Role,
+			IsActive:       true,
+		}
 
-	if err := database.DB.Create(&staff).Error; err != nil {
-		pkg.Log.Error("failed to create staff user", zap.Error(err))
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create staff member"})
-		return
-	}
+		if err := tx.Create(&staff).Error; err != nil {
+			return err
+		}
 
-	// Audit Log
-	database.DB.Create(&models.AuditLog{
-		OrganizationID: orgID.(uuid.UUID),
-		UserID:         adminID.(uuid.UUID),
-		Action:         "CREATE_STAFF",
-		Entity:         "USER",
-		EntityID:       staff.ID.String(),
-		IPAddress:      c.ClientIP(),
-		UserAgent:      c.Request.UserAgent(),
+		// Audit Log
+		audit := models.AuditLog{
+			OrganizationID: orgID.(uuid.UUID),
+			UserID:         adminID.(uuid.UUID),
+			Action:         "CREATE_STAFF",
+			Entity:         "USER",
+			EntityID:       staff.ID.String(),
+			IPAddress:      c.ClientIP(),
+			UserAgent:      c.Request.UserAgent(),
+		}
+
+		if err := tx.Create(&audit).Error; err != nil {
+			return err
+		}
+
+		c.Set("new_staff_id", staff.ID)
+		return nil
 	})
 
+	if err != nil {
+		if err == gorm.ErrDuplicatedKey {
+			c.JSON(http.StatusConflict, gin.H{"error": "Username already exists in this organization"})
+		} else {
+			pkg.Log.Error("failed to create staff user", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create staff member"})
+		}
+		return
+	}
+
+	newID, _ := c.Get("new_staff_id")
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Staff member created successfully",
-		"user_id": staff.ID,
+		"user_id": newID,
 	})
 }
 
 // ListStaff godoc
 // @Summary List all staff members
-// @Description Get all staff members for the current organization
+// @Description Get all staff members for the current organization with pagination and filtering
 // @Tags users
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(10)
+// @Param role query string false "Filter by role"
+// @Param search query string false "Search by name or email"
 // @Success 200 {array} UserResponse
 // @Security BearerAuth
 // @Router /users/staff [get]
 func ListStaff(c *gin.Context) {
 	orgID, _ := c.Get("org_id")
 
+	// Pagination
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	offset := (page - 1) * limit
+
+	// Filtering
+	role := c.Query("role")
+	search := c.Query("search")
+
+	query := database.DB.Where("organization_id = ?", orgID)
+
+	if role != "" {
+		query = query.Where("role = ?", role)
+	}
+
+	if search != "" {
+		query = query.Where("full_name ILIKE ? OR email ILIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+
 	var staff []models.User
-	if err := database.DB.Where("organization_id = ?", orgID).Find(&staff).Error; err != nil {
+	if err := query.Offset(offset).Limit(limit).Find(&staff).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch staff members"})
 		return
 	}
@@ -233,17 +274,24 @@ type AuditLogResponse struct {
 
 // GetActivityMonitoring godoc
 // @Summary Get user activity logs
-// @Description Get audit logs for the current organization
+// @Description Get audit logs for the current organization with pagination
 // @Tags users
 // @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param limit query int false "Items per page" default(20)
 // @Success 200 {array} AuditLogResponse
 // @Security BearerAuth
 // @Router /users/activity [get]
 func GetActivityMonitoring(c *gin.Context) {
 	orgID, _ := c.Get("org_id")
 
+	// Pagination
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	offset := (page - 1) * limit
+
 	var logs []models.AuditLog
-	if err := database.DB.Where("organization_id = ?", orgID).Order("created_at desc").Limit(100).Find(&logs).Error; err != nil {
+	if err := database.DB.Where("organization_id = ?", orgID).Order("created_at desc").Offset(offset).Limit(limit).Find(&logs).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch activity logs"})
 		return
 	}

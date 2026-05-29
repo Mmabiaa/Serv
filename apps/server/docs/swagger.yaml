@@ -389,7 +389,18 @@ paths:
       - auth
   /users/activity:
     get:
-      description: Get audit logs for the current organization
+      description: Get audit logs for the current organization with pagination
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
@@ -421,7 +432,27 @@ paths:
       - users
   /users/staff:
     get:
-      description: Get all staff members for the current organization
+      description: Get all staff members for the current organization with pagination
+        and filtering
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by role
+        in: query
+        name: role
+        type: string
+      - description: Search by name or email
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
