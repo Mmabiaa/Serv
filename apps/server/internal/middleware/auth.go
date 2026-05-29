@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/serv/server/internal/auth"
+	"github.com/serv/server/internal/database"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -35,6 +36,18 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Set("user_id", claims.UserID)
 		c.Set("org_id", claims.OrganizationID)
 		c.Set("role", claims.Role)
+
+		// Extra check: Is user still active?
+		// Note: In production, you might want to cache this in Redis to avoid DB hit on every request
+		// For now, we'll do a quick DB check or assume token expiry handles it.
+		// Let's implement a simple check.
+		var userIsActive bool
+		err = database.DB.Table("users").Select("is_active").Where("id = ?", claims.UserID).Scan(&userIsActive).Error
+		if err == nil && !userIsActive {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Account is deactivated"})
+			c.Abort()
+			return
+		}
 
 		c.Next()
 	}
