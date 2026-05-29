@@ -1,0 +1,329 @@
+basePath: /api/v1
+definitions:
+  auth.LoginRequest:
+    properties:
+      device_id:
+        description: Optional device tracking
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  auth.LoginResponse:
+    properties:
+      refresh_token:
+        type: string
+      require_otp:
+        type: boolean
+      token:
+        type: string
+      user:
+        properties:
+          full_name:
+            type: string
+          id:
+            type: string
+          role:
+            type: string
+        type: object
+    type: object
+  auth.PasswordResetRequest:
+    description: Get a new access token using a refresh token
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  auth.PasswordResetVerifyRequest:
+    properties:
+      email:
+        type: string
+      new_password:
+        minLength: 8
+        type: string
+      otp:
+        type: string
+    required:
+    - email
+    - new_password
+    - otp
+    type: object
+  auth.RefreshRequest:
+    description: Authenticate a staff member using PIN
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  auth.RegisterRequest:
+    properties:
+      business_location:
+        type: string
+      manager_email:
+        type: string
+      manager_name:
+        type: string
+      manager_password:
+        minLength: 8
+        type: string
+      manager_security_pin:
+        type: string
+      organization_name:
+        type: string
+      phone_number:
+        type: string
+    required:
+    - business_location
+    - manager_email
+    - manager_name
+    - manager_password
+    - manager_security_pin
+    - organization_name
+    - phone_number
+    type: object
+  auth.StaffLoginRequest:
+    properties:
+      pin:
+        type: string
+      username:
+        type: string
+    required:
+    - pin
+    - username
+    type: object
+  auth.VerifyOTPRequest:
+    properties:
+      device_id:
+        type: string
+      email:
+        type: string
+      otp:
+        type: string
+    required:
+    - device_id
+    - email
+    - otp
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the API documentation for the Serv SaaS platform.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Serv API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a manager using email and password
+      parameters:
+      - description: Manager credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Manager login
+      tags:
+      - auth
+  /auth/password-reset/request:
+    post:
+      consumes:
+      - application/json
+      description: Send OTP to email for password reset
+      parameters:
+      - description: Email details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.PasswordResetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP sent
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Request password reset
+      tags:
+      - auth
+  /auth/password-reset/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verify OTP and reset password
+      parameters:
+      - description: Reset details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.PasswordResetVerifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password reset successful
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Invalid OTP
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Verify password reset
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get a new access token using a refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "401":
+          description: Invalid refresh token
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Refresh access token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new organization and its manager user
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Organization registered successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Organization or Email already exists
+          schema:
+            additionalProperties: true
+            type: object
+        "422":
+          description: Validation error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a new organization
+      tags:
+      - auth
+  /auth/staff/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a staff member using PIN
+      parameters:
+      - description: Staff credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.StaffLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Staff login
+      tags:
+      - auth
+  /auth/verify-otp:
+    post:
+      consumes:
+      - application/json
+      description: Verify OTP for a new device and mark it as trusted
+      parameters:
+      - description: OTP verification details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "401":
+          description: Invalid OTP
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Verify OTP and trust device
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
