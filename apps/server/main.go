@@ -13,6 +13,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/serv/server/docs"
 	"github.com/serv/server/internal/auth"
+	"github.com/serv/server/internal/customers"
 	"github.com/serv/server/internal/database"
 	"github.com/serv/server/internal/inventory"
 	"github.com/serv/server/internal/middleware"
@@ -139,6 +140,15 @@ func main() {
 			salesGroup.GET("/history", sales.GetSalesHistory)
 			salesGroup.GET("/:id", sales.GetSaleDetails)
 			salesGroup.POST("/:id/void", sales.VoidSale)
+		}
+
+		// Customer Routes
+		customerGroup := v1.Group("/customers")
+		customerGroup.Use(middleware.AuthMiddleware())
+		{
+			customerGroup.POST("/", customers.CreateCustomer)
+			customerGroup.GET("/", customers.ListCustomers)
+			customerGroup.GET("/:id", customers.GetCustomerDetails)
 		}
 	}
 

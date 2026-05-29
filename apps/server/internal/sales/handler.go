@@ -150,7 +150,21 @@ func Checkout(c *gin.Context) {
 			return err
 		}
 
-		// 5. Audit Log
+		// 5. Update Customer stats (if provided)
+		if req.CustomerID != nil {
+			var customer models.Customer
+			if err := tx.Set("gorm:query_option", "FOR UPDATE").First(&customer, "id = ? AND organization_id = ?", req.CustomerID, orgID).Error; err == nil {
+				now := time.Now()
+				customer.TotalSpent += sale.TotalAmount
+				customer.TotalOrders += 1
+				customer.LastVisitAt = &now
+				if err := tx.Save(&customer).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		// 6. Audit Log
 		audit := models.AuditLog{
 			OrganizationID: orgID.(uuid.UUID),
 			UserID:         userID.(uuid.UUID),
