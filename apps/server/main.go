@@ -14,6 +14,7 @@ import (
 	_ "github.com/serv/server/docs"
 	"github.com/serv/server/internal/auth"
 	"github.com/serv/server/internal/database"
+	"github.com/serv/server/internal/inventory"
 	"github.com/serv/server/internal/middleware"
 	"github.com/serv/server/internal/users"
 	"github.com/serv/server/pkg"
@@ -110,6 +111,23 @@ func main() {
 				adminGroup.POST("/staff/:id/deactivate", users.DeactivateStaff)
 				adminGroup.GET("/activity", users.GetActivityMonitoring)
 			}
+		}
+
+		// Inventory Routes
+		inventoryGroup := v1.Group("/inventory")
+		inventoryGroup.Use(middleware.AuthMiddleware())
+		{
+			// Categories
+			inventoryGroup.POST("/categories", inventory.CreateCategory)
+			inventoryGroup.GET("/categories", inventory.ListCategories)
+
+			// Products
+			inventoryGroup.POST("/products", inventory.CreateProduct)
+			inventoryGroup.GET("/products", inventory.ListProducts)
+
+			// Stock Movements
+			inventoryGroup.POST("/adjust", inventory.AdjustStock)
+			inventoryGroup.GET("/movements", inventory.GetMovementHistory)
 		}
 	}
 

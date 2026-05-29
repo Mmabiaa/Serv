@@ -19,7 +19,7 @@ import (
 func setupUserTestRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	
+
 	v1 := r.Group("/api/v1")
 	{
 		authGroup := v1.Group("/auth")
@@ -96,7 +96,7 @@ func TestUserManagementFlow(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
-	
+
 	var loginResp auth.LoginResponse
 	json.Unmarshal(w.Body.Bytes(), &loginResp)
 	token := loginResp.Token
@@ -128,7 +128,7 @@ func TestUserManagementFlow(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var staffList []map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &staffList)
 	assert.GreaterOrEqual(t, len(staffList), 2) // Admin + Cashier
@@ -150,8 +150,8 @@ func TestUserManagementFlow(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusOK, w.Code)
-	
+
 	var profile map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &profile)
-	assert.Equal(t, "admin@test.com", profile["Email"])
+	assert.Equal(t, "admin@test.com", profile["email"])
 }

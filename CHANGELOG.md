@@ -37,19 +37,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Phase 2: User Management] - 2026-05-29
 
 ### Added
-- Implemented Staff Management endpoints:
-  - `POST /api/v1/users/staff`: Create new staff member (Admin/Manager only).
-  - `GET /api/v1/users/staff`: List organization staff (Admin/Manager only).
-  - `POST /api/v1/users/staff/:id/deactivate`: Toggle staff account status (Admin/Manager only).
-  - `GET /api/v1/users/profile`: Get authenticated user profile.
-  - `GET /api/v1/users/activity`: Get organization audit logs (Admin/Manager only).
-- Added RBAC enforcement for user management actions.
-- Integrated Audit Logging for staff creation and status changes.
-- Added automated integration tests for User Management flow.
-- Updated Swagger documentation with Phase 2 endpoints.
-  - Enhanced `AuthMiddleware` to verify account activity status on every request.
-  - **Enterprise Readiness & Scaling**:
-    - Implemented **Pagination and Filtering** for Staff and Activity logs.
-    - Added **CORS** and **Security Headers** (XSS, CSP, HSTS) middleware.
-    - Refactored staff creation to use **GORM Transactions** for atomic data consistency.
-    - Implemented **Graceful Shutdown** to ensure no requests are lost during deployment.
+- Initialized Phase 2: User Management implementation.
+  - Implemented Staff Management endpoints (Create, List, Deactivate).
+  - Added RBAC enforcement and Audit Logging for user actions.
+  - Added Pagination and Filtering for staff and activity logs.
+  - Hardened security with CORS, XSS, CSP, and HSTS headers.
+  - Implemented Graceful Shutdown for operational stability.
+
+## [Phase 3: Inventory Management System] - 2026-05-29
+
+### Added
+- Implemented **Category Management**:
+  - `POST /api/v1/inventory/categories`: Create product categories.
+  - `GET /api/v1/inventory/categories`: List all categories.
+- Implemented **Product Management**:
+  - `POST /api/v1/inventory/products`: Create new products with barcode and unit support.
+  - `GET /api/v1/inventory/products`: List products with pagination, search, and category filters.
+  - Added **Low Stock Alert** filter to product listing.
+- Implemented **Stock Adjustment & Ledger**:
+  - `POST /api/v1/inventory/adjust`: Atomic stock updates using **Database Transactions**.
+  - Integrated **Row-Level Locking** (`FOR UPDATE`) to ensure consistency under high concurrency.
+  - `GET /api/v1/inventory/movements`: Immutable inventory movement ledger.
+- **Enterprise Engineering**:
+  - Full Audit Logging for every inventory change.
+  - Fractional unit support (kg, liters) via decimal precision.
+  - Automated integration tests for the full inventory lifecycle.
+  - Updated Swagger documentation with all Phase 3 endpoints.
