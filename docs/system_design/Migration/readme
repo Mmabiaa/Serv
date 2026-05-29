@@ -1,0 +1,97 @@
+# DATABASE MIGRATION STRATEGY
+
+# Migration Philosophy
+
+Database schema changes must:
+
+* be version-controlled
+* be reversible
+* be tested before production
+* never manually alter production data
+
+---
+
+# Migration Tool
+
+Recommended:
+
+* golang-migrate
+
+---
+
+# Migration Structure
+
+```text id="07w0w7"
+migrations/
+    000001_create_users.up.sql
+    000001_create_users.down.sql
+```
+
+---
+
+# Migration Rules
+
+* one logical change per migration
+* all migrations reversible
+* never edit executed migrations
+* create new migrations instead
+
+---
+
+# Deployment Strategy
+
+Deployment flow:
+
+```text id="wxk8eq"
+Deploy Application
+↓
+Run Migrations
+↓
+Validate Health Checks
+↓
+Enable Traffic
+```
+
+---
+
+# Rollback Strategy
+
+If deployment fails:
+
+* rollback application
+* rollback migration if safe
+* restore backup if necessary
+
+---
+
+# Backup Policy
+
+Before production migrations:
+
+* automatic DB backup required
+
+---
+
+# Schema Evolution Principles
+
+Avoid:
+
+* breaking existing APIs
+* destructive column removals
+* long-running table locks
+
+Prefer:
+
+* additive changes
+* staged migrations
+* backward compatibility
+
+---
+
+# Production Safety Rules
+
+NEVER:
+
+* manually edit production tables
+* bypass migration tooling
+* run untested migrations
