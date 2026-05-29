@@ -6,12 +6,34 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	_ "github.com/serv/server/docs"
 	"github.com/serv/server/internal/auth"
 	"github.com/serv/server/internal/database"
 	"github.com/serv/server/internal/middleware"
 	"github.com/serv/server/pkg"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.uber.org/zap"
 )
+
+// @title Serv API
+// @version 1.0
+// @description This is the API documentation for the Serv SaaS platform.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /api/v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 
 func main() {
 	fmt.Println("1. Starting app")
@@ -48,11 +70,15 @@ func main() {
 	r.Use(middleware.GinLogger())
 	r.Use(middleware.GinRecovery())
 
+	// Routes
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	v1 := r.Group("/api/v1")
 	{
 		authGroup := v1.Group("/auth")
 		{
 			authGroup.POST("/register", auth.RegisterOrganization)
+			authGroup.POST("/login", auth.Login)
 		}
 	}
 

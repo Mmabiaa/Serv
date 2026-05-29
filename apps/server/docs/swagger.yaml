@@ -1,0 +1,86 @@
+basePath: /api/v1
+definitions:
+  auth.RegisterRequest:
+    properties:
+      business_location:
+        type: string
+      manager_email:
+        type: string
+      manager_name:
+        type: string
+      manager_password:
+        minLength: 8
+        type: string
+      manager_security_pin:
+        type: string
+      organization_name:
+        type: string
+      phone_number:
+        type: string
+    required:
+    - business_location
+    - manager_email
+    - manager_name
+    - manager_password
+    - manager_security_pin
+    - organization_name
+    - phone_number
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the API documentation for the Serv SaaS platform.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Serv API
+  version: "1.0"
+paths:
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new organization and its manager user
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Organization registered successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Organization or Email already exists
+          schema:
+            additionalProperties: true
+            type: object
+        "422":
+          description: Validation error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a new organization
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

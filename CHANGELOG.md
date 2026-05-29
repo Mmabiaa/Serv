@@ -23,5 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Configured GORM Auto-migration.
   - Setup structured logging with Zap.
   - Improved logging: added development/production modes, Gin middleware for request logging, and unified Zap logging across the backend.
+  - Added Swagger API documentation at `/swagger/index.html`.
+  - Reorganized testing suite: moved all tests to a dedicated `tests/` directory (`tests/unit` and `tests/integration`).
+  - Implemented `Login` endpoint with JWT response.
+  - Added end-to-end integration tests for the full Registration -> Login workflow.
+  - Implemented unit tests for JWT authentication and Auth Middleware.
   - Added `AuditLog` model for tracking sensitive actions.
   - Implemented OTP generation and verification using Redis.
