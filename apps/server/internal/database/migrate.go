@@ -1,9 +1,9 @@
 package database
 
 import (
-	"log"
-
 	"github.com/serv/server/internal/models"
+	"github.com/serv/server/pkg"
+	"go.uber.org/zap"
 )
 
 func AutoMigrate() {
@@ -13,7 +13,7 @@ func AutoMigrate() {
 		&models.AuditLog{},
 	)
 	if err != nil {
-		log.Fatalf("Migration failed: %v", err)
+		pkg.Log.Fatal("Migration failed", zap.Error(err))
 	}
-	log.Println("Database migration completed")
+	pkg.Log.Info("Database migration completed")
 }

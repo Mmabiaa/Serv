@@ -1,24 +1,29 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/serv/server/internal/auth"
 	"github.com/serv/server/internal/database"
+	"github.com/serv/server/internal/middleware"
 	"github.com/serv/server/pkg"
+	"go.uber.org/zap"
 )
 
 func main() {
 	// Load .env file
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found, using environment variables")
+		// Can't use zap yet as it's not initialized
 	}
 
 	// Initialize Logger
-	pkg.InitLogger()
+	env := os.Getenv("GIN_MODE")
+	if env == "" {
+		env = "development"
+	}
+	pkg.InitLogger(env)
 	defer pkg.Log.Sync()
 
 	// Initialize Database
@@ -29,9 +34,14 @@ func main() {
 	database.InitRedis()
 
 	// Set Gin mode
-	gin.SetMode(os.Getenv("GIN_MODE"))
+	gin.SetMode(env)
 
-	r := gin.Default()
+	// Use gin.New() to avoid default logger/recovery middleware
+	r := gin.New()
+
+	// Custom Zap middleware
+	r.Use(middleware.GinLogger())
+	r.Use(middleware.GinRecovery())
 
 	// Routes
 	v1 := r.Group("/api/v1")
@@ -55,8 +65,8 @@ func main() {
 		port = "8080"
 	}
 
-	log.Printf("Server starting on :%s", port)
+	pkg.Log.Info("Server starting", zap.String("port", port))
 	if err := r.Run(":" + port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		pkg.Log.Fatal("Failed to start server", zap.Error(err))
 	}
 }

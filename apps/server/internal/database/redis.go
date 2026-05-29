@@ -3,10 +3,11 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/serv/server/pkg"
+	"go.uber.org/zap"
 )
 
 var RedisClient *redis.Client
@@ -22,9 +23,9 @@ func InitRedis() {
 	})
 
 	if _, err := rdb.Ping(ctx).Result(); err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
+		pkg.Log.Fatal("Failed to connect to Redis", zap.Error(err))
 	}
 
 	RedisClient = rdb
-	log.Println("Redis connection established")
+	pkg.Log.Info("Redis connection established")
 }

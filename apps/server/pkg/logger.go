@@ -7,8 +7,15 @@ import (
 
 var Log *zap.Logger
 
-func InitLogger() {
-	config := zap.NewProductionConfig()
+func InitLogger(env string) {
+	var config zap.Config
+	if env == "production" {
+		config = zap.NewProductionConfig()
+	} else {
+		config = zap.NewDevelopmentConfig()
+		config.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	}
+
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	
 	var err error

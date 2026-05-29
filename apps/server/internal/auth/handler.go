@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/serv/server/internal/database"
 	"github.com/serv/server/internal/models"
+	"github.com/serv/server/pkg"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -29,6 +31,7 @@ func RegisterOrganization(c *gin.Context) {
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.ManagerPassword), bcrypt.DefaultCost)
 	if err != nil {
+		pkg.Log.Error("failed to hash password", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
@@ -36,6 +39,7 @@ func RegisterOrganization(c *gin.Context) {
 	// Hash PIN
 	hashedPIN, err := bcrypt.GenerateFromPassword([]byte(req.ManagerPIN), bcrypt.DefaultCost)
 	if err != nil {
+		pkg.Log.Error("failed to hash PIN", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash PIN"})
 		return
 	}
@@ -51,6 +55,7 @@ func RegisterOrganization(c *gin.Context) {
 	}
 
 	if err := database.DB.Create(&org).Error; err != nil {
+		pkg.Log.Warn("organization registration failed", zap.String("email", req.ManagerEmail), zap.Error(err))
 		c.JSON(http.StatusConflict, gin.H{"error": "Organization or Email already exists"})
 		return
 	}
@@ -64,7 +69,11 @@ func RegisterOrganization(c *gin.Context) {
 		PIN:            org.ManagerPIN, // Store the hashed PIN
 		Role:           "admin",        // Managers are admins
 	}
-	database.DB.Create(&managerUser)
+	if err := database.DB.Create(&managerUser).Error; err != nil {
+		pkg.Log.Error("failed to create manager user", zap.Error(err))
+	}
+
+	pkg.Log.Info("organization registered", zap.String("org", org.Name), zap.String("manager", org.ManagerEmail))
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Organization registered successfully",

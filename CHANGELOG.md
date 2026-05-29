@@ -22,5 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented Organization Registration flow (hashing passwords/PINs).
   - Configured GORM Auto-migration.
   - Setup structured logging with Zap.
+  - Improved logging: added development/production modes, Gin middleware for request logging, and unified Zap logging across the backend.
   - Added `AuditLog` model for tracking sensitive actions.
   - Implemented OTP generation and verification using Redis.

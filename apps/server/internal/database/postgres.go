@@ -2,9 +2,10 @@ package database
 
 import (
 	"fmt"
-	"log"
 	"os"
 
+	"github.com/serv/server/pkg"
+	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -23,9 +24,9 @@ func InitDB() {
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		pkg.Log.Fatal("Failed to connect to database", zap.Error(err))
 	}
 
 	DB = db
-	log.Println("Database connection established")
+	pkg.Log.Info("Database connection established")
 }
