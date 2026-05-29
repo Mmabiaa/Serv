@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -13,37 +14,40 @@ import (
 )
 
 func main() {
-	// Load .env file
+	fmt.Println("1. Starting app")
+
 	if err := godotenv.Load(); err != nil {
-		// Can't use zap yet as it's not initialized
+		fmt.Println("2. No .env found")
 	}
 
-	// Initialize Logger
+	fmt.Println("3. Initializing logger")
+
 	env := os.Getenv("GIN_MODE")
 	if env == "" {
 		env = "development"
 	}
+
 	pkg.InitLogger(env)
 	defer pkg.Log.Sync()
 
-	// Initialize Database
+	fmt.Println("4. Initializing DB")
 	database.InitDB()
+
+	fmt.Println("5. Running migrations")
 	database.AutoMigrate()
 
-	// Initialize Redis
+	fmt.Println("6. Initializing Redis")
 	database.InitRedis()
 
-	// Set Gin mode
+	fmt.Println("7. Configuring Gin")
+
 	gin.SetMode(env)
 
-	// Use gin.New() to avoid default logger/recovery middleware
 	r := gin.New()
 
-	// Custom Zap middleware
 	r.Use(middleware.GinLogger())
 	r.Use(middleware.GinRecovery())
 
-	// Routes
 	v1 := r.Group("/api/v1")
 	{
 		authGroup := v1.Group("/auth")
@@ -52,7 +56,6 @@ func main() {
 		}
 	}
 
-	// Health check
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"status":  "ok",
@@ -65,7 +68,10 @@ func main() {
 		port = "8080"
 	}
 
+	fmt.Println("8. Starting server on port", port)
+
 	pkg.Log.Info("Server starting", zap.String("port", port))
+
 	if err := r.Run(":" + port); err != nil {
 		pkg.Log.Fatal("Failed to start server", zap.Error(err))
 	}
