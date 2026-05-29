@@ -16,9 +16,10 @@ func TestJWT(t *testing.T) {
 	// Mock JWT_SECRET
 	t.Setenv("JWT_SECRET", "test_secret")
 
-	token, err := auth.GenerateToken(userID, orgID, role)
+	token, refreshToken, err := auth.GenerateToken(userID, orgID, role)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
+	assert.NotEmpty(t, refreshToken)
 
 	claims, err := auth.ValidateToken(token)
 	assert.NoError(t, err)

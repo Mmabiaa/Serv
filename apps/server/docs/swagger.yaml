@@ -1,5 +1,39 @@
 basePath: /api/v1
 definitions:
+  auth.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  auth.LoginResponse:
+    properties:
+      refresh_token:
+        type: string
+      token:
+        type: string
+      user:
+        properties:
+          full_name:
+            type: string
+          id:
+            type: string
+          role:
+            type: string
+        type: object
+    type: object
+  auth.RefreshRequest:
+    description: Authenticate a staff member using PIN
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
   auth.RegisterRequest:
     properties:
       business_location:
@@ -26,6 +60,16 @@ definitions:
     - organization_name
     - phone_number
     type: object
+  auth.StaffLoginRequest:
+    properties:
+      pin:
+        type: string
+      username:
+        type: string
+    required:
+    - pin
+    - username
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -40,6 +84,60 @@ info:
   title: Serv API
   version: "1.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a manager using email and password
+      parameters:
+      - description: Manager credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Manager login
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Get a new access token using a refresh token
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "401":
+          description: Invalid refresh token
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Refresh access token
+      tags:
+      - auth
   /auth/register:
     post:
       consumes:
@@ -76,6 +174,33 @@ paths:
             additionalProperties: true
             type: object
       summary: Register a new organization
+      tags:
+      - auth
+  /auth/staff/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a staff member using PIN
+      parameters:
+      - description: Staff credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.StaffLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.LoginResponse'
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Staff login
       tags:
       - auth
 securityDefinitions:

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -69,6 +70,7 @@ func main() {
 
 	r.Use(middleware.GinLogger())
 	r.Use(middleware.GinRecovery())
+	r.Use(middleware.RateLimitMiddleware(100, time.Minute))
 
 	// Routes
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -79,6 +81,8 @@ func main() {
 		{
 			authGroup.POST("/register", auth.RegisterOrganization)
 			authGroup.POST("/login", auth.Login)
+			authGroup.POST("/staff/login", auth.StaffLogin)
+			authGroup.POST("/refresh", auth.Refresh)
 		}
 	}
 

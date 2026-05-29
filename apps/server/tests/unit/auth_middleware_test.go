@@ -18,7 +18,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 	userID := uuid.New()
 	orgID := uuid.New()
-	token, _ := auth.GenerateToken(userID, orgID, "admin")
+	token, _, _ := auth.GenerateToken(userID, orgID, "admin")
 
 	tests := []struct {
 		name           string
@@ -56,7 +56,7 @@ func TestAuthMiddleware(t *testing.T) {
 			if tt.token != "" {
 				req.Header.Set("Authorization", tt.token)
 			}
-			
+
 			r.ServeHTTP(w, req)
 			assert.Equal(t, tt.expectedStatus, w.Code)
 		})

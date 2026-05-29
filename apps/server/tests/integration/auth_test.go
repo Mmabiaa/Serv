@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/serv/server/internal/auth"
 	"github.com/serv/server/internal/database"
 	"github.com/serv/server/pkg"
@@ -39,9 +40,14 @@ func TestAuthFlow(t *testing.T) {
 	t.Setenv("DB_NAME", "serv_db")
 	t.Setenv("DB_SSLMODE", "disable")
 
+	t.Setenv("REDIS_HOST", "localhost")
+	t.Setenv("REDIS_PORT", "6379")
+	t.Setenv("REDIS_PASSWORD", "")
+
 	// Initialize dependencies
 	pkg.InitLogger("development")
 	database.InitDB()
+	database.InitRedis()
 	database.AutoMigrate()
 
 	// Clean up database before test
@@ -91,4 +97,10 @@ func TestAuthFlow(t *testing.T) {
 	assert.NotEmpty(t, loginResp.Token)
 	assert.Equal(t, "admin", loginResp.User.Role)
 	assert.Equal(t, "Test Manager", loginResp.User.FullName)
+
+	// Test token generation directly
+	userID := uuid.New()
+	orgID := uuid.New()
+	token, _, _ := auth.GenerateToken(userID, orgID, "admin")
+	assert.NotEmpty(t, token)
 }

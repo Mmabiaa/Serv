@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/serv/server/internal/database"
@@ -85,6 +87,17 @@ func RegisterOrganization(c *gin.Context) {
 		pkg.Log.Error("failed to create manager user", zap.Error(err))
 	}
 
+	// Audit Log
+	database.DB.Create(&models.AuditLog{
+		OrganizationID: org.ID,
+		UserID:         managerUser.ID,
+		Action:         "REGISTER",
+		Entity:         "ORGANIZATION",
+		EntityID:       org.ID.String(),
+		IPAddress:      c.ClientIP(),
+		UserAgent:      c.Request.UserAgent(),
+	})
+
 	pkg.Log.Info("organization registered", zap.String("org", org.Name), zap.String("manager", org.ManagerEmail))
 
 	c.JSON(http.StatusCreated, gin.H{
@@ -108,13 +121,18 @@ type LoginResponse struct {
 	} `json:"user"`
 }
 
+type StaffLoginRequest struct {
+	Username string `json:"username" binding:"required"`
+	PIN      string `json:"pin" binding:"required,len=4"`
+}
+
 // Login godoc
-// @Summary User login
-// @Description Authenticate a manager/staff member
+// @Summary Manager login
+// @Description Authenticate a manager using email and password
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body LoginRequest true "Login credentials"
+// @Param request body LoginRequest true "Manager credentials"
 // @Success 200 {object} LoginResponse
 // @Failure 401 {object} map[string]interface{} "Invalid credentials"
 // @Router /auth/login [post]
@@ -125,33 +143,213 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	var user models.User
-	if err := database.DB.Where("username = ? OR email = ?", req.Email, req.Email).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+	// Rate limiting failed attempts (lockout logic)
+	lockoutKey := "lockout:" + req.Email
+	ctx := context.Background()
+	attempts, _ := database.RedisClient.Get(ctx, lockoutKey).Int()
+	if attempts >= 5 {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "Account locked due to too many failed attempts. Try again in 15 minutes."})
 		return
 	}
 
-	// For managers (admins), check organization password
 	var org models.Organization
-	if err := database.DB.First(&org, "id = ?", user.OrganizationID).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify organization"})
+	if err := database.DB.Where("manager_email = ?", req.Email).First(&org).Error; err != nil {
+		database.RedisClient.Incr(ctx, lockoutKey)
+		database.RedisClient.Expire(ctx, lockoutKey, 15*time.Minute)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
 	// Check password
 	if err := bcrypt.CompareHashAndPassword([]byte(org.ManagerPassword), []byte(req.Password)); err != nil {
+		database.RedisClient.Incr(ctx, lockoutKey)
+		database.RedisClient.Expire(ctx, lockoutKey, 15*time.Minute)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
-	token, err := GenerateToken(user.ID, user.OrganizationID, user.Role)
+	// Success - Reset lockout
+	database.RedisClient.Del(ctx, lockoutKey)
+
+	// Find the manager user record
+	var user models.User
+	if err := database.DB.Where("organization_id = ? AND role = 'admin'", org.ID).First(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Manager account not found"})
+		return
+	}
+
+	token, refreshToken, err := GenerateToken(user.ID, user.OrganizationID, user.Role)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	// Audit Log
+	database.DB.Create(&models.AuditLog{
+		OrganizationID: user.OrganizationID,
+		UserID:         user.ID,
+		Action:         "LOGIN",
+		Entity:         "USER",
+		EntityID:       user.ID.String(),
+		IPAddress:      c.ClientIP(),
+		UserAgent:      c.Request.UserAgent(),
+	})
+
+	c.JSON(http.StatusOK, LoginResponse{
+		Token:        token,
+		RefreshToken: refreshToken,
+		User: struct {
+			ID       string `json:"id"`
+			FullName string `json:"full_name"`
+			Role     string `json:"role"`
+		}{
+			ID:       user.ID.String(),
+			FullName: user.FullName,
+			Role:     user.Role,
+		},
+	})
+}
+
+// StaffLogin godoc
+// @Summary Staff login
+// @Description Authenticate a staff member using PIN
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body StaffLoginRequest true "Staff credentials"
+// @Success 200 {object} LoginResponse
+// @Failure 401 {object} map[string]interface{} "Invalid credentials"
+// @Router /auth/staff/login [post]
+func StaffLogin(c *gin.Context) {
+	var req StaffLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Rate limiting failed attempts
+	lockoutKey := "lockout_staff:" + req.Username
+	ctx := context.Background()
+	attempts, _ := database.RedisClient.Get(ctx, lockoutKey).Int()
+	if attempts >= 5 {
+		c.JSON(http.StatusTooManyRequests, gin.H{"error": "Account locked. Try again in 15 minutes."})
+		return
+	}
+
+	var user models.User
+	if err := database.DB.Where("username = ?", req.Username).First(&user).Error; err != nil {
+		database.RedisClient.Incr(ctx, lockoutKey)
+		database.RedisClient.Expire(ctx, lockoutKey, 15*time.Minute)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	// Check PIN (stored as bcrypt hash)
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PIN), []byte(req.PIN)); err != nil {
+		database.RedisClient.Incr(ctx, lockoutKey)
+		database.RedisClient.Expire(ctx, lockoutKey, 15*time.Minute)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	// Success - Reset lockout
+	database.RedisClient.Del(ctx, lockoutKey)
+
+	if !user.IsActive {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Account is deactivated"})
+		return
+	}
+
+	token, refreshToken, err := GenerateToken(user.ID, user.OrganizationID, user.Role)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
+
+	// Audit Log
+	database.DB.Create(&models.AuditLog{
+		OrganizationID: user.OrganizationID,
+		UserID:         user.ID,
+		Action:         "STAFF_LOGIN",
+		Entity:         "USER",
+		EntityID:       user.ID.String(),
+		IPAddress:      c.ClientIP(),
+		UserAgent:      c.Request.UserAgent(),
+	})
+
+	c.JSON(http.StatusOK, LoginResponse{
+		Token:        token,
+		RefreshToken: refreshToken,
+		User: struct {
+			ID       string `json:"id"`
+			FullName string `json:"full_name"`
+			Role     string `json:"role"`
+		}{
+			ID:       user.ID.String(),
+			FullName: user.FullName,
+			Role:     user.Role,
+		},
+	})
+}
+
+// StaffLogin godoc
+// @Summary Staff login
+// @Description Authenticate a staff member using PIN
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body StaffLoginRequest true "Staff credentials"
+// @Success 200 {object} LoginResponse
+// @Failure 401 {object} map[string]interface{} "Invalid credentials"
+// @Router /auth/staff/login [post]
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// Refresh godoc
+// @Summary Refresh access token
+// @Description Get a new access token using a refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body RefreshRequest true "Refresh token"
+// @Success 200 {object} LoginResponse
+// @Failure 401 {object} map[string]interface{} "Invalid refresh token"
+// @Router /auth/refresh [post]
+func Refresh(c *gin.Context) {
+	var req RefreshRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+
+	claims, err := ValidateToken(req.RefreshToken)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired refresh token"})
+		return
+	}
+
+	// Fetch user to ensure they still exist and are active
+	var user models.User
+	if err := database.DB.First(&user, "id = ?", claims.UserID).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	if !user.IsActive {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Account is deactivated"})
+		return
+	}
+
+	token, refreshToken, err := GenerateToken(user.ID, user.OrganizationID, user.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
 	c.JSON(http.StatusOK, LoginResponse{
-		Token: token,
+		Token:        token,
+		RefreshToken: refreshToken,
 		User: struct {
 			ID       string `json:"id"`
 			FullName string `json:"full_name"`
