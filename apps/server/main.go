@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/serv/server/internal/auth"
 	"github.com/serv/server/internal/database"
 	"github.com/serv/server/pkg"
 )
@@ -22,6 +23,7 @@ func main() {
 
 	// Initialize Database
 	database.InitDB()
+	database.AutoMigrate()
 
 	// Initialize Redis
 	database.InitRedis()
@@ -30,6 +32,15 @@ func main() {
 	gin.SetMode(os.Getenv("GIN_MODE"))
 
 	r := gin.Default()
+
+	// Routes
+	v1 := r.Group("/api/v1")
+	{
+		authGroup := v1.Group("/auth")
+		{
+			authGroup.POST("/register", auth.RegisterOrganization)
+		}
+	}
 
 	// Health check
 	r.GET("/health", func(c *gin.Context) {

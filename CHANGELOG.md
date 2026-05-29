@@ -16,3 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `docker-compose.yml` for PostgreSQL and Redis infrastructure.
   - Configured initial environment variables in `.env`.
 - Initialized Phase 1: Authentication & Security Core.
+  - Defined `Organization` and `User` models for multi-tenant support.
+  - Implemented JWT authentication and validation logic.
+  - Created `AuthMiddleware` and `RoleMiddleware` for request protection.
+  - Implemented Organization Registration flow (hashing passwords/PINs).
+  - Configured GORM Auto-migration.
+  - Setup structured logging with Zap.
+  - Added `AuditLog` model for tracking sensitive actions.
+  - Implemented OTP generation and verification using Redis.
