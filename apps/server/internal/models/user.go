@@ -28,10 +28,20 @@ type User struct {
 	Username       string    `gorm:"index;not null"`
 	PhoneNumber    string
 	Email          string
-	PIN            string    `gorm:"not null"`
-	Role           string    `gorm:"not null"` // e.g., "admin", "manager", "cashier"
-	IsActive       bool      `gorm:"default:true"`
+	PIN            string `gorm:"not null"`
+	Role           string `gorm:"not null"` // e.g., "admin", "manager", "cashier"
+	IsActive       bool   `gorm:"default:true"`
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	DeletedAt      gorm.DeletedAt `gorm:"index"`
+}
+
+type UserDevice struct {
+	ID         uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	UserID     uuid.UUID `gorm:"type:uuid;index;not null"`
+	DeviceID   string    `gorm:"index;not null"` // Client-generated or browser fingerprint
+	DeviceName string
+	LastUsedAt time.Time
+	IsTrusted  bool `gorm:"default:false"`
+	CreatedAt  time.Time
 }

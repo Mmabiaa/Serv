@@ -83,6 +83,9 @@ func main() {
 			authGroup.POST("/login", auth.Login)
 			authGroup.POST("/staff/login", auth.StaffLogin)
 			authGroup.POST("/refresh", auth.Refresh)
+			authGroup.POST("/verify-otp", auth.VerifyOTPHandler)
+			authGroup.POST("/password-reset/request", auth.RequestPasswordReset)
+			authGroup.POST("/password-reset/verify", auth.VerifyPasswordReset)
 		}
 	}
 

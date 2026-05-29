@@ -11,6 +11,7 @@ func AutoMigrate() {
 		&models.Organization{},
 		&models.User{},
 		&models.AuditLog{},
+		&models.UserDevice{},
 	)
 	if err != nil {
 		pkg.Log.Fatal("Migration failed", zap.Error(err))

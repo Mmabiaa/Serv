@@ -109,11 +109,13 @@ func RegisterOrganization(c *gin.Context) {
 type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
+	DeviceID string `json:"device_id"` // Optional device tracking
 }
 
 type LoginResponse struct {
 	Token        string `json:"token"`
 	RefreshToken string `json:"refresh_token"`
+	RequireOTP   bool   `json:"require_otp,omitempty"`
 	User         struct {
 		ID       string `json:"id"`
 		FullName string `json:"full_name"`
@@ -178,6 +180,34 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	// Check for new device (SRS 15.4 / 15.5)
+	if req.DeviceID != "" {
+		var device models.UserDevice
+		err := database.DB.Where("user_id = ? AND device_id = ?", user.ID, req.DeviceID).First(&device).Error
+		if err != nil {
+			// New device - Trigger OTP (SRS 16.6 Risk Triggers)
+			otp, _ := GenerateOTP(user.Email)
+			pkg.Log.Info("New device detected, OTP required", zap.String("email", user.Email), zap.String("otp", otp)) // In real app, send via email/SMS
+
+			c.JSON(http.StatusAccepted, LoginResponse{
+				RequireOTP: true,
+				User: struct {
+					ID       string `json:"id"`
+					FullName string `json:"full_name"`
+					Role     string `json:"role"`
+				}{
+					ID:       user.ID.String(),
+					FullName: user.FullName,
+					Role:     user.Role,
+				},
+			})
+			return
+		}
+
+		// Update last used
+		database.DB.Model(&device).Update("last_used_at", time.Now())
+	}
+
 	token, refreshToken, err := GenerateToken(user.ID, user.OrganizationID, user.Role)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
@@ -194,6 +224,132 @@ func Login(c *gin.Context) {
 		IPAddress:      c.ClientIP(),
 		UserAgent:      c.Request.UserAgent(),
 	})
+
+	c.JSON(http.StatusOK, LoginResponse{
+		Token:        token,
+		RefreshToken: refreshToken,
+		User: struct {
+			ID       string `json:"id"`
+			FullName string `json:"full_name"`
+			Role     string `json:"role"`
+		}{
+			ID:       user.ID.String(),
+			FullName: user.FullName,
+			Role:     user.Role,
+		},
+	})
+}
+
+// VerifyPasswordReset godoc
+// @Summary Verify password reset
+// @Description Verify OTP and reset password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body PasswordResetVerifyRequest true "Reset details"
+// @Success 200 {object} map[string]interface{} "Password reset successful"
+// @Failure 401 {object} map[string]interface{} "Invalid OTP"
+// @Router /auth/password-reset/verify [post]
+func VerifyPasswordReset(c *gin.Context) {
+	var req PasswordResetVerifyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+
+	valid, err := VerifyOTP(req.Email, req.OTP)
+	if err != nil || !valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired OTP"})
+		return
+	}
+
+	// Fetch user
+	var user models.User
+	if err := database.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Fetch organization for manager password update
+	var org models.Organization
+	if err := database.DB.First(&org, "id = ?", user.OrganizationID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify organization"})
+		return
+	}
+
+	// Hash new password
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+
+	// Update organization password
+	if err := database.DB.Model(&org).Update("manager_password", string(hashedPassword)).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
+		return
+	}
+
+	// Audit Log
+	database.DB.Create(&models.AuditLog{
+		OrganizationID: user.OrganizationID,
+		UserID:         user.ID,
+		Action:         "PASSWORD_RESET",
+		Entity:         "USER",
+		EntityID:       user.ID.String(),
+		IPAddress:      c.ClientIP(),
+		UserAgent:      c.Request.UserAgent(),
+	})
+
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset successful"})
+}
+
+type VerifyOTPRequest struct {
+	Email    string `json:"email" binding:"required,email"`
+	OTP      string `json:"otp" binding:"required,len=6"`
+	DeviceID string `json:"device_id" binding:"required"`
+}
+
+// VerifyOTP godoc
+// @Summary Verify OTP and trust device
+// @Description Verify OTP for a new device and mark it as trusted
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body VerifyOTPRequest true "OTP verification details"
+// @Success 200 {object} LoginResponse
+// @Failure 401 {object} map[string]interface{} "Invalid OTP"
+// @Router /auth/verify-otp [post]
+func VerifyOTPHandler(c *gin.Context) {
+	var req VerifyOTPRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+
+	valid, err := VerifyOTP(req.Email, req.OTP)
+	if err != nil || !valid {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired OTP"})
+		return
+	}
+
+	// Fetch user
+	var user models.User
+	if err := database.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Trust the device
+	device := models.UserDevice{
+		UserID:     user.ID,
+		DeviceID:   req.DeviceID,
+		IsTrusted:  true,
+		LastUsedAt: time.Now(),
+	}
+	database.DB.Create(&device)
+
+	token, refreshToken, err := GenerateToken(user.ID, user.OrganizationID, user.Role)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+		return
+	}
 
 	c.JSON(http.StatusOK, LoginResponse{
 		Token:        token,
@@ -304,6 +460,56 @@ func StaffLogin(c *gin.Context) {
 // @Router /auth/staff/login [post]
 type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// Refresh godoc
+// @Summary Refresh access token
+// @Description Get a new access token using a refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body RefreshRequest true "Refresh token"
+// @Success 200 {object} LoginResponse
+// @Failure 401 {object} map[string]interface{} "Invalid refresh token"
+// @Router /auth/refresh [post]
+type PasswordResetRequest struct {
+	Email string `json:"email" binding:"required,email"`
+}
+
+type PasswordResetVerifyRequest struct {
+	Email       string `json:"email" binding:"required,email"`
+	OTP         string `json:"otp" binding:"required,len=6"`
+	NewPassword string `json:"new_password" binding:"required,min=8"`
+}
+
+// RequestPasswordReset godoc
+// @Summary Request password reset
+// @Description Send OTP to email for password reset
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body PasswordResetRequest true "Email details"
+// @Success 200 {object} map[string]interface{} "OTP sent"
+// @Router /auth/password-reset/request [post]
+func RequestPasswordReset(c *gin.Context) {
+	var req PasswordResetRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Check if user exists
+	var user models.User
+	if err := database.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
+		// Don't reveal if user exists for security
+		c.JSON(http.StatusOK, gin.H{"message": "If the email exists, an OTP has been sent"})
+		return
+	}
+
+	otp, _ := GenerateOTP(user.Email)
+	pkg.Log.Info("Password reset OTP generated", zap.String("email", user.Email), zap.String("otp", otp))
+
+	c.JSON(http.StatusOK, gin.H{"message": "If the email exists, an OTP has been sent"})
 }
 
 // Refresh godoc
