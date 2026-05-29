@@ -16,6 +16,7 @@ import (
 	"github.com/serv/server/internal/database"
 	"github.com/serv/server/internal/inventory"
 	"github.com/serv/server/internal/middleware"
+	"github.com/serv/server/internal/sales"
 	"github.com/serv/server/internal/users"
 	"github.com/serv/server/pkg"
 	swaggerFiles "github.com/swaggo/files"
@@ -128,6 +129,16 @@ func main() {
 			// Stock Movements
 			inventoryGroup.POST("/adjust", inventory.AdjustStock)
 			inventoryGroup.GET("/movements", inventory.GetMovementHistory)
+		}
+
+		// Sales Routes
+		salesGroup := v1.Group("/sales")
+		salesGroup.Use(middleware.AuthMiddleware())
+		{
+			salesGroup.POST("/checkout", sales.Checkout)
+			salesGroup.GET("/history", sales.GetSalesHistory)
+			salesGroup.GET("/:id", sales.GetSaleDetails)
+			salesGroup.POST("/:id/void", sales.VoidSale)
 		}
 	}
 

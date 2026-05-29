@@ -222,6 +222,106 @@ definitions:
     - quantity
     - type
     type: object
+  sales.CartItem:
+    properties:
+      discount:
+        type: number
+      product_id:
+        type: string
+      quantity:
+        type: number
+    required:
+    - product_id
+    - quantity
+    type: object
+  sales.CheckoutRequest:
+    properties:
+      customer_id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/sales.CartItem'
+        minItems: 1
+        type: array
+      payment_method:
+        enum:
+        - CASH
+        - MOMO
+        - CARD
+        type: string
+      total_discount:
+        type: number
+    required:
+    - items
+    - payment_method
+    type: object
+  sales.DetailedSaleResponse:
+    properties:
+      created_at:
+        type: string
+      discount_amount:
+        type: number
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/sales.SaleItemResponse'
+        type: array
+      payment_method:
+        type: string
+      receipt_number:
+        type: string
+      status:
+        type: string
+      sub_total:
+        type: number
+      tax_amount:
+        type: number
+      total_amount:
+        type: number
+    type: object
+  sales.SaleItemResponse:
+    properties:
+      discount_amount:
+        type: number
+      id:
+        type: string
+      product_id:
+        type: string
+      product_name:
+        type: string
+      quantity:
+        type: number
+      total_price:
+        type: number
+      unit_price:
+        type: number
+    type: object
+  sales.SaleResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      receipt_number:
+        type: string
+      sub_total:
+        type: number
+      tax_amount:
+        type: number
+      total_amount:
+        type: number
+    type: object
+  sales.VoidSaleRequest:
+    properties:
+      pin:
+        type: string
+      reason:
+        type: string
+    required:
+    - pin
+    - reason
+    type: object
   users.AuditLogResponse:
     properties:
       action:
@@ -653,6 +753,108 @@ paths:
       summary: Create a new product
       tags:
       - inventory
+  /sales/{id}:
+    get:
+      parameters:
+      - description: Sale ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sales.DetailedSaleResponse'
+      security:
+      - BearerAuth: []
+      summary: Get detailed information of a specific sale
+      tags:
+      - sales
+  /sales/{id}/void:
+    post:
+      consumes:
+      - application/json
+      description: Revert inventory and mark sale as voided. Requires Manager/Admin
+        PIN.
+      parameters:
+      - description: Sale ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Void details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/sales.VoidSaleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Void a sale
+      tags:
+      - sales
+  /sales/checkout:
+    post:
+      consumes:
+      - application/json
+      description: Deduct inventory, record sale, and generate receipt atomically
+      parameters:
+      - description: Checkout details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/sales.CheckoutRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/sales.SaleResponse'
+      security:
+      - BearerAuth: []
+      summary: Process a new sale
+      tags:
+      - sales
+  /sales/history:
+    get:
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/sales.DetailedSaleResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get sales history with pagination
+      tags:
+      - sales
   /users/activity:
     get:
       description: Get audit logs for the current organization with pagination

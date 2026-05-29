@@ -63,3 +63,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fractional unit support (kg, liters) via decimal precision.
   - Automated integration tests for the full inventory lifecycle.
   - Updated Swagger documentation with all Phase 3 endpoints.
+
+## [Phase 4: Sales & Transaction Engine] - 2026-05-29
+
+### Added
+- Implemented **Atomic Checkout Engine**:
+  - `POST /api/v1/sales/checkout`: Processes sales using ACID transactions.
+  - Automatic inventory deduction with **Row-Level Locking** (`FOR UPDATE`) for concurrency safety.
+  - Integrated support for taxes (15% VAT) and item-level/total-level discounts.
+  - Automatic generation of unique receipt numbers.
+- Implemented **Secure Transaction Voiding**:
+  - `POST /api/v1/sales/:id/void`: Reverts sales and restores inventory.
+  - **PIN Authorization**: Requires Manager/Admin security PIN as per SRS 16.1.
+  - Immutable audit trail for all voided transactions.
+- Implemented **Sales History & Reporting**:
+  - `GET /api/v1/sales/history`: Paginated list of all sales with preloaded items.
+  - `GET /api/v1/sales/:id`: Detailed view of a specific transaction and its line items.
+- **Enterprise Engineering**:
+  - Full Audit Logging for every sale and void action.
+  - Comprehensive integration tests for the full sales lifecycle (Register -> Stock -> Sale -> Void -> Stock Reversal).
+  - Updated Swagger documentation with high-fidelity DTO responses.
