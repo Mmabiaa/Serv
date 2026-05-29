@@ -11,6 +11,7 @@ import (
 	"github.com/serv/server/internal/auth"
 	"github.com/serv/server/internal/database"
 	"github.com/serv/server/internal/middleware"
+	"github.com/serv/server/internal/users"
 	"github.com/serv/server/pkg"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -86,6 +87,22 @@ func main() {
 			authGroup.POST("/verify-otp", auth.VerifyOTPHandler)
 			authGroup.POST("/password-reset/request", auth.RequestPasswordReset)
 			authGroup.POST("/password-reset/verify", auth.VerifyPasswordReset)
+		}
+
+		userGroup := v1.Group("/users")
+		userGroup.Use(middleware.AuthMiddleware())
+		{
+			userGroup.GET("/profile", users.GetProfile)
+
+			// Admin/Manager only actions
+			adminGroup := userGroup.Group("")
+			adminGroup.Use(middleware.RoleMiddleware("admin", "manager"))
+			{
+				adminGroup.POST("/staff", users.CreateStaff)
+				adminGroup.GET("/staff", users.ListStaff)
+				adminGroup.POST("/staff/:id/deactivate", users.DeactivateStaff)
+				adminGroup.GET("/activity", users.GetActivityMonitoring)
+			}
 		}
 	}
 

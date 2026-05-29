@@ -30,3 +30,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented unit tests for JWT authentication and Auth Middleware.
   - Added `AuditLog` model for tracking sensitive actions.
   - Implemented OTP generation and verification using Redis.
+  - Implemented Trusted Device tracking and Risk-Based Authentication (OTP for new devices).
+  - Added Password Reset flow using OTP.
+  - Implemented IP-based Rate Limiting and Account Lockout logic.
+
+## [Phase 2: User Management] - 2026-05-29
+
+### Added
+- Implemented Staff Management endpoints:
+  - `POST /api/v1/users/staff`: Create new staff member (Admin/Manager only).
+  - `GET /api/v1/users/staff`: List organization staff (Admin/Manager only).
+  - `POST /api/v1/users/staff/:id/deactivate`: Toggle staff account status (Admin/Manager only).
+  - `GET /api/v1/users/profile`: Get authenticated user profile.
+  - `GET /api/v1/users/activity`: Get organization audit logs (Admin/Manager only).
+- Added RBAC enforcement for user management actions.
+- Integrated Audit Logging for staff creation and status changes.
+- Added automated integration tests for User Management flow.
+- Updated Swagger documentation with Phase 2 endpoints.
+- Enhanced `AuthMiddleware` to verify account activity status on every request.
