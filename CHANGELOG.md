@@ -100,3 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Immutable purchase history linking sales to customer profiles.
   - Automated integration tests for the full customer lifecycle.
   - Updated Swagger documentation with customer DTOs.
+- **Enhanced Checkout Workflow**:
+  - Integrated "Just-in-Time" customer creation during checkout.
+  - Cashiers can now provide `customer_phone` and `customer_name` directly in the checkout request.
+  - System automatically looks up existing customers by phone or creates a new profile if not found, significantly speeding up the operational workflow.

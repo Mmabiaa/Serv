@@ -10,7 +10,7 @@ import (
 type Customer struct {
 	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	OrganizationID uuid.UUID `gorm:"type:uuid;index;not null"`
-	FullName       string    `gorm:"not null"`
+	FullName       string    `gorm:"index;not null"`
 	PhoneNumber    string    `gorm:"index"`
 	Email          string    `gorm:"index"`
 	Address        string

@@ -274,6 +274,12 @@ definitions:
     properties:
       customer_id:
         type: string
+      customer_name:
+        description: Optional for creation
+        type: string
+      customer_phone:
+        description: For fast lookup/creation
+        type: string
       items:
         items:
           $ref: '#/definitions/sales.CartItem'

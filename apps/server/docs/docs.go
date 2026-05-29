@@ -1459,6 +1459,14 @@ const docTemplate = `{
                 "customer_id": {
                     "type": "string"
                 },
+                "customer_name": {
+                    "description": "Optional for creation",
+                    "type": "string"
+                },
+                "customer_phone": {
+                    "description": "For fast lookup/creation",
+                    "type": "string"
+                },
                 "items": {
                     "type": "array",
                     "minItems": 1,

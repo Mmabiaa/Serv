@@ -8,18 +8,20 @@ import (
 )
 
 type Sale struct {
-	ID             uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	OrganizationID uuid.UUID `gorm:"type:uuid;index;not null"`
-	UserID         uuid.UUID `gorm:"type:uuid;index;not null"` // Cashier ID
+	ID             uuid.UUID  `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	OrganizationID uuid.UUID  `gorm:"type:uuid;index;not null"`
+	UserID         uuid.UUID  `gorm:"type:uuid;index;not null"` // Cashier ID
 	CustomerID     *uuid.UUID `gorm:"type:uuid;index"`
-	TotalAmount    float64   `gorm:"type:decimal(10,2);not null"`
-	TaxAmount      float64   `gorm:"type:decimal(10,2);default:0"`
-	DiscountAmount float64   `gorm:"type:decimal(10,2);default:0"`
-	SubTotal       float64   `gorm:"type:decimal(10,2);not null"`
-	Status         string    `gorm:"default:'COMPLETED'"` // COMPLETED, VOIDED, REFUNDED
-	PaymentMethod  string    `gorm:"not null"`            // CASH, MOMO, CARD
-	ReceiptNumber  string    `gorm:"uniqueIndex;not null"`
-	CreatedAt      time.Time `gorm:"index"`
+	CustomerName   string     // Snapshot for receipt
+	CustomerPhone  string     // Snapshot for receipt
+	TotalAmount    float64    `gorm:"type:decimal(10,2);not null"`
+	TaxAmount      float64    `gorm:"type:decimal(10,2);default:0"`
+	DiscountAmount float64    `gorm:"type:decimal(10,2);default:0"`
+	SubTotal       float64    `gorm:"type:decimal(10,2);not null"`
+	Status         string     `gorm:"default:'COMPLETED'"` // COMPLETED, VOIDED, REFUNDED
+	PaymentMethod  string     `gorm:"not null"`            // CASH, MOMO, CARD
+	ReceiptNumber  string     `gorm:"uniqueIndex;not null"`
+	CreatedAt      time.Time  `gorm:"index"`
 	UpdatedAt      time.Time
 	DeletedAt      gorm.DeletedAt `gorm:"index"`
 	Items          []SaleItem     `gorm:"foreignKey:SaleID"`
