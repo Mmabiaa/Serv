@@ -258,6 +258,53 @@ definitions:
     - quantity
     - type
     type: object
+  reports.DailySalesReport:
+    properties:
+      date:
+        type: string
+      net_profit:
+        type: number
+      total_discount:
+        type: number
+      total_orders:
+        type: integer
+      total_sales:
+        type: number
+      total_tax:
+        type: number
+    type: object
+  reports.ProductSalesPerformance:
+    properties:
+      product_id:
+        type: string
+      product_name:
+        type: string
+      quantity_sold:
+        type: number
+      total_revenue:
+        type: number
+    type: object
+  reports.StaffPerformance:
+    properties:
+      staff_id:
+        type: string
+      staff_name:
+        type: string
+      total_orders:
+        type: integer
+      total_sales:
+        type: number
+    type: object
+  reports.SummaryReport:
+    properties:
+      period:
+        description: e.g., "2024-05"
+        type: string
+      total_orders:
+        type: integer
+      total_sales:
+        type: number
+    type: object
   sales.CartItem:
     properties:
       discount:
@@ -301,6 +348,10 @@ definitions:
     properties:
       created_at:
         type: string
+      customer_name:
+        type: string
+      customer_phone:
+        type: string
       discount_amount:
         type: number
       id:
@@ -342,6 +393,10 @@ definitions:
   sales.SaleResponse:
     properties:
       created_at:
+        type: string
+      customer_name:
+        type: string
+      customer_phone:
         type: string
       id:
         type: string
@@ -869,6 +924,111 @@ paths:
       summary: Create a new product
       tags:
       - inventory
+  /reports/daily:
+    get:
+      description: Get sales aggregation for a specific date or last 7 days
+      parameters:
+      - description: Date in YYYY-MM-DD format
+        in: query
+        name: date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/reports.DailySalesReport'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get daily sales summary
+      tags:
+      - reports
+  /reports/export/sales:
+    get:
+      parameters:
+      - description: Start date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: End date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - text/csv
+      responses:
+        "200":
+          description: CSV content
+          schema:
+            type: string
+      security:
+      - BearerAuth: []
+      summary: Export sales history to CSV
+      tags:
+      - reports
+  /reports/staff-performance:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/reports.StaffPerformance'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get staff sales performance
+      tags:
+      - reports
+  /reports/summary:
+    get:
+      parameters:
+      - description: 'Report type: monthly or yearly'
+        in: query
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/reports.SummaryReport'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get periodic summary (monthly or yearly)
+      tags:
+      - reports
+  /reports/top-products:
+    get:
+      parameters:
+      - default: 10
+        description: Number of products
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/reports.ProductSalesPerformance'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Get top selling products
+      tags:
+      - reports
   /sales/{id}:
     get:
       parameters:

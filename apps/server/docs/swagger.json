@@ -682,6 +682,179 @@
                 }
             }
         },
+        "/reports/daily": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get sales aggregation for a specific date or last 7 days",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Get daily sales summary",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Date in YYYY-MM-DD format",
+                        "name": "date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/reports.DailySalesReport"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/export/sales": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "text/csv"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Export sales history to CSV",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "CSV content",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/staff-performance": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Get staff sales performance",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/reports.StaffPerformance"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/summary": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Get periodic summary (monthly or yearly)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Report type: monthly or yearly",
+                        "name": "type",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/reports.SummaryReport"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/top-products": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Get top selling products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Number of products",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/reports.ProductSalesPerformance"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/sales/checkout": {
             "post": {
                 "security": [
@@ -1425,6 +1598,78 @@
                 }
             }
         },
+        "reports.DailySalesReport": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "net_profit": {
+                    "type": "number"
+                },
+                "total_discount": {
+                    "type": "number"
+                },
+                "total_orders": {
+                    "type": "integer"
+                },
+                "total_sales": {
+                    "type": "number"
+                },
+                "total_tax": {
+                    "type": "number"
+                }
+            }
+        },
+        "reports.ProductSalesPerformance": {
+            "type": "object",
+            "properties": {
+                "product_id": {
+                    "type": "string"
+                },
+                "product_name": {
+                    "type": "string"
+                },
+                "quantity_sold": {
+                    "type": "number"
+                },
+                "total_revenue": {
+                    "type": "number"
+                }
+            }
+        },
+        "reports.StaffPerformance": {
+            "type": "object",
+            "properties": {
+                "staff_id": {
+                    "type": "string"
+                },
+                "staff_name": {
+                    "type": "string"
+                },
+                "total_orders": {
+                    "type": "integer"
+                },
+                "total_sales": {
+                    "type": "number"
+                }
+            }
+        },
+        "reports.SummaryReport": {
+            "type": "object",
+            "properties": {
+                "period": {
+                    "description": "e.g., \"2024-05\"",
+                    "type": "string"
+                },
+                "total_orders": {
+                    "type": "integer"
+                },
+                "total_sales": {
+                    "type": "number"
+                }
+            }
+        },
         "sales.CartItem": {
             "type": "object",
             "required": [
@@ -1485,6 +1730,12 @@
             "type": "object",
             "properties": {
                 "created_at": {
+                    "type": "string"
+                },
+                "customer_name": {
+                    "type": "string"
+                },
+                "customer_phone": {
                     "type": "string"
                 },
                 "discount_amount": {
@@ -1549,6 +1800,12 @@
             "type": "object",
             "properties": {
                 "created_at": {
+                    "type": "string"
+                },
+                "customer_name": {
+                    "type": "string"
+                },
+                "customer_phone": {
                     "type": "string"
                 },
                 "id": {
