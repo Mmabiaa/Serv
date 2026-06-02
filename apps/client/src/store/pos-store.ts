@@ -25,6 +25,7 @@ export type Customer = {
   phone_number: string;
   total_orders: number;
   total_spent: number;
+  sales?: Transaction[];
 };
 
 export type Transaction = {
@@ -274,7 +275,23 @@ export const usePosStore = create<PosState>()(
       updateProduct: async (p) => {
         set({ isLoading: true });
         try {
+          // 1. Get original product to check for stock changes
+          const original = get().products.find(item => item.id === p.id);
+          
+          // 2. Perform general update
           await api.put(`/inventory/products/${p.id}`, p);
+          
+          // 3. If quantity has changed, perform an adjustment
+          if (original && p.quantity !== undefined && p.quantity !== original.quantity) {
+            const diff = p.quantity - original.quantity;
+            await api.post("/inventory/adjust", {
+              product_id: p.id,
+              quantity: Math.abs(diff),
+              type: diff > 0 ? "RESTOCK" : "OUT",
+              reason: `Manual stock update from ${original.quantity} to ${p.quantity}`
+            });
+          }
+          
           await get().fetchProducts();
         } catch (err: any) {
           set({ error: err.message, isLoading: false });

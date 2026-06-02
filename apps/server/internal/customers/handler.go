@@ -14,16 +14,26 @@ import (
 )
 
 type CustomerResponse struct {
-	ID          uuid.UUID  `json:"id"`
-	FullName    string     `json:"full_name"`
-	PhoneNumber string     `json:"phone_number"`
-	Email       string     `json:"email"`
-	Address     string     `json:"address"`
-	TotalSpent  float64    `json:"total_spent"`
-	TotalOrders int        `json:"total_orders"`
-	Balance     float64    `json:"balance"`
-	LastVisitAt *time.Time `json:"last_visit_at"`
-	CreatedAt   time.Time  `json:"created_at"`
+	ID          uuid.UUID      `json:"id"`
+	FullName    string         `json:"full_name"`
+	PhoneNumber string         `json:"phone_number"`
+	Email       string         `json:"email"`
+	Address     string         `json:"address"`
+	TotalSpent  float64        `json:"total_spent"`
+	TotalOrders int            `json:"total_orders"`
+	Balance     float64        `json:"balance"`
+	LastVisitAt *time.Time     `json:"last_visit_at"`
+	CreatedAt   time.Time      `json:"created_at"`
+	Sales       []SaleResponse `json:"sales,omitempty"`
+}
+
+type SaleResponse struct {
+	ID            uuid.UUID `json:"id"`
+	ReceiptNumber string    `json:"receipt_number"`
+	TotalAmount   float64   `json:"total_amount"`
+	PaymentMethod string    `json:"payment_method"`
+	CreatedAt     time.Time `json:"created_at"`
+	ItemCount     int       `json:"item_count"`
 }
 
 type CreateCustomerRequest struct {
@@ -97,14 +107,18 @@ func ListCustomers(c *gin.Context) {
 	offset := (page - 1) * limit
 	search := c.Query("search")
 
-	query := database.DB.Where("organization_id = ?", orgID)
+	var customers []models.Customer
+	query := database.DB.Preload("Sales").Where("organization_id = ?", orgID)
+
 	if search != "" {
-		query = query.Where("full_name ILIKE ? OR phone_number ILIKE ? OR email ILIKE ?", 
+		query = query.Where("full_name ILIKE ? OR phone_number ILIKE ? OR email ILIKE ?",
 			"%"+search+"%", "%"+search+"%", "%"+search+"%")
 	}
 
-	var customers []models.Customer
-	query.Offset(offset).Limit(limit).Order("full_name asc").Find(&customers)
+	if err := query.Order("full_name ASC").Limit(limit).Offset(offset).Find(&customers).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch customers"})
+		return
+	}
 
 	var resp []CustomerResponse
 	for _, cust := range customers {
@@ -143,6 +157,18 @@ func GetCustomerDetails(c *gin.Context) {
 }
 
 func toCustomerResponse(c models.Customer) CustomerResponse {
+	var sales []SaleResponse
+	for _, s := range c.Sales {
+		sales = append(sales, SaleResponse{
+			ID:            s.ID,
+			ReceiptNumber: s.ReceiptNumber,
+			TotalAmount:   s.TotalAmount,
+			PaymentMethod: s.PaymentMethod,
+			CreatedAt:     s.CreatedAt,
+			// Note: ItemCount would require preloading Items in Sale
+		})
+	}
+
 	return CustomerResponse{
 		ID:          c.ID,
 		FullName:    c.FullName,
@@ -154,5 +180,6 @@ func toCustomerResponse(c models.Customer) CustomerResponse {
 		Balance:     c.Balance,
 		LastVisitAt: c.LastVisitAt,
 		CreatedAt:   c.CreatedAt,
+		Sales:       sales,
 	}
 }

@@ -108,8 +108,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Unified **Activity Monitoring**: Replaced mock security logs with a real-time audit trail fetched from the backend `/api/v1/users/activity` endpoint.
   - **Localization**: Changed system currency to Ghana Cedis (GHS/GH₵) with localized formatting.
   - **API Expansion**: Added backend handlers for `PUT` (Update) and `DELETE` (Remove) for inventory management.
-  - Improved **RESTful Standards**: Standardized all API calls to include `limit=100` for consistent performance and scalability.
-  - Implemented full API integration with the Go backend via a secured `api-client`.
+  - Improved **RESTful Standards**:- Standardized all API calls to include `limit=100` for consistent performance and scalability.
+- **Retail & Financial Core**:
+  - Switched system currency to **Ghana Cedis (GHS/GH₵)** with precise 2-decimal formatting.
+  - Implemented **Immutable Stock Ledger**: Stock levels can no longer be directly overwritten; all changes (Restocks, Sales, Manual Adjustments) now generate verifiable movement records.
+  - Developed **Transaction-Based CRM**: Automated customer profiling using phone numbers as primary keys, featuring lifetime spend tracking and visit history.
+  - Enhanced **Executive Reporting**: Real-time sales analytics and weekly performance charts now fetch data from production APIs instead of mock objects.
+  - Hardened **Audit Monitoring**: Fully integrated the backend's security audit trail into the Manager Portal, tracking all sensitive organizational actions.
+  - Fixed **Data Synchronization**: Implemented atomic state refetching after checkouts and stock adjustments to ensure absolute UI consistency.
+  - Resolved **Type Safety Errors**: Synchronized frontend `Transaction` and `Customer` types with backend snake_case JSON schemas.
+  - Optimized **Printing Experience**: Implemented a non-disruptive, hidden-iframe native printing strategy for supermarket-grade receipts. Implemented full API integration with the Go backend via a secured `api-client`.
   - Switched from local state persistence to server-driven data fetching for Products, Staff, Customers, and Transactions.
 - **UI/UX Enhancements**:
   - Implemented a high-end, 10x engineer quality aesthetic using Tailwind CSS 4.
