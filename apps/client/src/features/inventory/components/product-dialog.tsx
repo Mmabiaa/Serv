@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { X, Upload, Trash2, Link, Image as ImageIcon, Loader2 } from "lucide-react";
 import { type Product } from "@/store/pos-data";
-import { addProduct, deleteProduct, updateProduct, useCategories, fetchCategories } from "@/store/pos-store";
+import { addProduct, deleteProduct, updateProduct, useCategories, fetchCategories, addCategory } from "@/store/pos-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -14,12 +14,16 @@ export function ProductDialog({ product, onClose }: ProductDialogProps) {
   const [img, setImg] = useState<string | undefined>(product?.imageUrl);
   const [imgSource, setImgSource] = useState<"file" | "url">("file");
   const [loading, setLoading] = useState(false);
+  const [categoryName, setCategoryName] = useState("");
   const upRef = useRef<HTMLInputElement>(null);
   const categories = useCategories();
 
   useEffect(() => {
-    fetchCategories();
-  }, []);
+    if (product) {
+      const cat = categories.find(c => c.id === product.category_id);
+      if (cat) setCategoryName(cat.name);
+    }
+  }, [product, categories]);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -35,12 +39,21 @@ export function ProductDialog({ product, onClose }: ProductDialogProps) {
     setLoading(true);
     const fd = new FormData(e.currentTarget);
     const name = fd.get("name") as string;
-    const category_id = fd.get("category") as string;
     const price = Number(fd.get("price"));
     const quantity = Number(fd.get("stock"));
     const finalImg = imgSource === "url" ? (fd.get("imgUrl") as string) : img;
 
     try {
+      // Find or create category
+      let category_id = "";
+      const existing = categories.find(c => c.name.toLowerCase() === categoryName.toLowerCase());
+      if (existing) {
+        category_id = existing.id;
+      } else {
+        const newCat = await addCategory(categoryName);
+        category_id = newCat.id;
+      }
+
       if (product) {
         await updateProduct({ ...product, name, category_id, price, quantity, imageUrl: finalImg });
         toast.success("Product updated successfully");
@@ -159,19 +172,21 @@ export function ProductDialog({ product, onClose }: ProductDialogProps) {
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
                 Category
               </label>
-              <select
+              <input
                 name="category"
-                defaultValue={product?.category_id}
+                list="category-list"
+                value={categoryName}
+                onChange={(e) => setCategoryName(e.target.value)}
                 className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
                 required
                 disabled={loading}
-              >
+                placeholder="Type or select..."
+              />
+              <datalist id="category-list">
                 {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
+                  <option key={c.id} value={c.name} />
                 ))}
-              </select>
+              </datalist>
             </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">

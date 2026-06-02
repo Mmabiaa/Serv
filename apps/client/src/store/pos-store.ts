@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useShallow } from "zustand/react/shallow";
+import { useMemo } from "react";
 import { api } from "@/lib/api-client";
 import {
   type Product,
@@ -85,6 +86,7 @@ interface PosState {
   fetchReports: () => Promise<void>;
   fetchMovements: () => Promise<void>;
 
+  addCategory: (name: string) => Promise<Category>;
   addProduct: (p: any) => Promise<void>;
   updateProduct: (p: Product) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -188,10 +190,34 @@ export const usePosStore = create<PosState>()(
         }
       },
 
+      addCategory: async (name: string) => {
+        try {
+          const res = await api.post<Category>("/inventory/categories", { name });
+          set((state) => ({
+            categories: [...state.categories, res]
+          }));
+          return res;
+        } catch (err: any) {
+          console.error("Failed to add category:", err);
+          throw err;
+        }
+      },
+
       addProduct: async (p) => {
         set({ isLoading: true });
         try {
-          await api.post("/inventory/products", p);
+          const res = await api.post<Product>("/inventory/products", p);
+          
+          // If initial stock was provided, perform an adjustment
+          if (p.quantity && p.quantity > 0) {
+            await api.post("/inventory/adjust", {
+              product_id: res.id,
+              quantity: p.quantity,
+              type: "IN",
+              reason: "Initial stock upon product creation"
+            });
+          }
+          
           await get().fetchProducts();
         } catch (err: any) {
           set({ error: err.message, isLoading: false });
@@ -290,27 +316,37 @@ export const usePosStore = create<PosState>()(
 );
 
 // Selectors for hooks
-export const useProducts = () => usePosStore(useShallow((state) => {
-  const { products, categories } = state;
-  return products.map(p => ({
-    ...p,
-    category_name: categories.find(c => c.id === p.category_id)?.name || "Uncategorized"
-  }));
-}));
+export const useProducts = () => {
+  const products = usePosStore((state) => state.products);
+  const categories = usePosStore((state) => state.categories);
+  return useMemo(() => {
+    return (products || []).map(p => ({
+      ...p,
+      category_name: categories.find(c => c.id === p.category_id)?.name || "Uncategorized"
+    }));
+  }, [products, categories]);
+};
+
 export const useCategories = () => usePosStore((state) => state.categories);
 export const useCustomers = () => usePosStore((state) => state.customers);
 export const useStaff = () => usePosStore((state) => state.staff);
 export const useTransactions = () => usePosStore((state) => state.transactions);
-export const useDailyReports = () => usePosStore((state) => state.dailyReports || []);
-export const useStaffPerformance = () => usePosStore((state) => state.staffPerformance || []);
-export const useMovements = () => usePosStore(useShallow((state) => {
-  const { movements, products, staff } = state;
-  return (movements || []).map(m => ({
-    ...m,
-    product_name: products.find(p => p.id === m.product_id)?.name || "Unknown Product",
-    staff_name: staff.find(s => s.id === m.user_id)?.fullName || "Unknown Staff"
-  }));
-}));
+export const useDailyReports = () => usePosStore((state) => state.dailyReports);
+export const useStaffPerformance = () => usePosStore((state) => state.staffPerformance);
+
+export const useMovements = () => {
+  const movements = usePosStore((state) => state.movements);
+  const products = usePosStore((state) => state.products);
+  const staff = usePosStore((state) => state.staff);
+  return useMemo(() => {
+    return (movements || []).map(m => ({
+      ...m,
+      product_name: products.find(p => p.id === m.product_id)?.name || "Unknown Product",
+      staff_name: staff.find(s => s.id === m.user_id)?.fullName || "Unknown Staff"
+    }));
+  }, [movements, products, staff]);
+};
+
 export const usePosLoading = () => usePosStore((state) => state.isLoading);
 export const usePosError = () => usePosStore((state) => state.error);
 
@@ -319,6 +355,7 @@ export const addProduct = (p: any) => usePosStore.getState().addProduct(p);
 export const updateProduct = (p: Product) => usePosStore.getState().updateProduct(p);
 export const deleteProduct = (id: string) => usePosStore.getState().deleteProduct(id);
 
+export const addCategory = (name: string) => usePosStore.getState().addCategory(name);
 export const addStaff = (s: any) => usePosStore.getState().addStaff(s);
 export const updateStaff = (s: StaffMember) => usePosStore.getState().updateStaff(s);
 export const deleteStaff = (id: string) => usePosStore.getState().deleteStaff(id);
