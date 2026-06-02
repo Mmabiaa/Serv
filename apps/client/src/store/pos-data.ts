@@ -1,0 +1,35 @@
+export type Product = {
+  id: string;
+  name: string;
+  price: number;
+  category_id: string;
+  category_name?: string;
+  quantity: number;
+  sku?: string;
+  barcode?: string;
+  description?: string;
+  image_url?: string;
+  emoji?: string; // Keep for UI fallback
+};
+
+export type Category = {
+  id: string;
+  name: string;
+  description?: string;
+};
+
+export const CURRENCY = "GHS";
+
+export const fmt = (n: number | undefined | null) => {
+  const val = n || 0;
+  return `GH₵ ${val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+// Mock data removed as per user request.
+// All data will be fetched from the server.
+export const categories: string[] = [];
+export const products: Product[] = [];
+export const recentTransactions: any[] = [];
+export const staff: any[] = [];
+export const customers: any[] = [];
+export const weeklySales: { day: string; value: number }[] = [];

@@ -67,6 +67,7 @@ func main() {
 
 	fmt.Println("5. Running migrations")
 	database.AutoMigrate()
+	database.SeedData()
 
 	fmt.Println("6. Initializing Redis")
 	database.InitRedis()
@@ -96,8 +97,8 @@ func main() {
 			authGroup.POST("/staff/login", auth.StaffLogin)
 			authGroup.POST("/refresh", auth.Refresh)
 			authGroup.POST("/verify-otp", auth.VerifyOTPHandler)
-			authGroup.POST("/password-reset/request", auth.RequestPasswordReset)
-			authGroup.POST("/password-reset/verify", auth.VerifyPasswordReset)
+			authGroup.POST("/pin-reset/request", auth.RequestPINReset)
+			authGroup.POST("/pin-reset/verify", auth.VerifyPINReset)
 		}
 
 		userGroup := v1.Group("/users")
@@ -127,6 +128,8 @@ func main() {
 			// Products
 			inventoryGroup.POST("/products", inventory.CreateProduct)
 			inventoryGroup.GET("/products", inventory.ListProducts)
+			inventoryGroup.PUT("/products/:id", inventory.UpdateProduct)
+			inventoryGroup.DELETE("/products/:id", inventory.DeleteProduct)
 
 			// Stock Movements
 			inventoryGroup.POST("/adjust", inventory.AdjustStock)

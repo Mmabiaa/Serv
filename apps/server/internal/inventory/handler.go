@@ -111,6 +111,7 @@ type ProductResponse struct {
 	Barcode       string    `json:"barcode"`
 	Price         float64   `json:"price"`
 	CostPrice     float64   `json:"cost_price"`
+	ImageURL      string    `json:"image_url"`
 	Quantity      float64   `json:"quantity"`
 	MinStockLevel float64   `json:"min_stock_level"`
 	Unit          string    `json:"unit"`
@@ -124,8 +125,22 @@ type CreateProductRequest struct {
 	Barcode       string    `json:"barcode"`
 	Price         float64   `json:"price" binding:"required,gt=0"`
 	CostPrice     float64   `json:"cost_price"`
+	ImageURL      string    `json:"image_url"`
 	MinStockLevel float64   `json:"min_stock_level"`
 	Unit          string    `json:"unit"`
+}
+
+type UpdateProductRequest struct {
+	CategoryID    *uuid.UUID `json:"category_id"`
+	Name          *string    `json:"name"`
+	Description   *string    `json:"description"`
+	SKU           *string    `json:"sku"`
+	Barcode       *string    `json:"barcode"`
+	Price         *float64   `json:"price" binding:"omitempty,gt=0"`
+	CostPrice     *float64   `json:"cost_price"`
+	ImageURL      *string    `json:"image_url"`
+	MinStockLevel *float64   `json:"min_stock_level"`
+	Unit          *string    `json:"unit"`
 }
 
 // CreateProduct godoc
@@ -156,6 +171,7 @@ func CreateProduct(c *gin.Context) {
 		Barcode:        req.Barcode,
 		Price:          req.Price,
 		CostPrice:      req.CostPrice,
+		ImageURL:       req.ImageURL,
 		MinStockLevel:  req.MinStockLevel,
 		Unit:           req.Unit,
 		Quantity:       0,
@@ -187,6 +203,7 @@ func CreateProduct(c *gin.Context) {
 		Barcode:       product.Barcode,
 		Price:         product.Price,
 		CostPrice:     product.CostPrice,
+		ImageURL:      product.ImageURL,
 		Quantity:      product.Quantity,
 		MinStockLevel: product.MinStockLevel,
 		Unit:          product.Unit,
@@ -240,6 +257,7 @@ func ListProducts(c *gin.Context) {
 			Barcode:       p.Barcode,
 			Price:         p.Price,
 			CostPrice:     p.CostPrice,
+			ImageURL:      p.ImageURL,
 			Quantity:      p.Quantity,
 			MinStockLevel: p.MinStockLevel,
 			Unit:          p.Unit,
@@ -247,6 +265,136 @@ func ListProducts(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+// UpdateProduct godoc
+// @Summary Update an existing product
+// @Tags inventory
+// @Accept json
+// @Produce json
+// @Param id path string true "Product ID"
+// @Param request body UpdateProductRequest true "Product details"
+// @Success 200 {object} ProductResponse
+// @Security BearerAuth
+// @Router /inventory/products/{id} [put]
+func UpdateProduct(c *gin.Context) {
+	id := c.Param("id")
+	orgID, _ := c.Get("org_id")
+	userID, _ := c.Get("user_id")
+
+	var req UpdateProductRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+
+	var product models.Product
+	if err := database.DB.First(&product, "id = ? AND organization_id = ?", id, orgID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		return
+	}
+
+	// Update fields using pointers for precise optional handling
+	if req.Name != nil {
+		product.Name = *req.Name
+	}
+	if req.CategoryID != nil {
+		product.CategoryID = *req.CategoryID
+	}
+	if req.Description != nil {
+		product.Description = *req.Description
+	}
+	if req.SKU != nil {
+		product.SKU = *req.SKU
+	}
+	if req.Barcode != nil {
+		product.Barcode = *req.Barcode
+	}
+	if req.Price != nil {
+		product.Price = *req.Price
+	}
+	if req.CostPrice != nil {
+		product.CostPrice = *req.CostPrice
+	}
+	if req.ImageURL != nil {
+		product.ImageURL = *req.ImageURL
+	}
+	if req.MinStockLevel != nil {
+		product.MinStockLevel = *req.MinStockLevel
+	}
+	if req.Unit != nil {
+		product.Unit = *req.Unit
+	}
+
+	if err := database.DB.Save(&product).Error; err != nil {
+		pkg.Log.Error("failed to update product", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product"})
+		return
+	}
+
+	// Audit Log
+	database.DB.Create(&models.AuditLog{
+		OrganizationID: orgID.(uuid.UUID),
+		UserID:         userID.(uuid.UUID),
+		Action:         "UPDATE_PRODUCT",
+		Entity:         "PRODUCT",
+		EntityID:       product.ID.String(),
+		IPAddress:      c.ClientIP(),
+		UserAgent:      c.Request.UserAgent(),
+	})
+
+	c.JSON(http.StatusOK, ProductResponse{
+		ID:            product.ID,
+		CategoryID:    product.CategoryID,
+		Name:          product.Name,
+		Description:   product.Description,
+		SKU:           product.SKU,
+		Barcode:       product.Barcode,
+		Price:         product.Price,
+		CostPrice:     product.CostPrice,
+		ImageURL:      product.ImageURL,
+		Quantity:      product.Quantity,
+		MinStockLevel: product.MinStockLevel,
+		Unit:          product.Unit,
+	})
+}
+
+// DeleteProduct godoc
+// @Summary Delete a product
+// @Tags inventory
+// @Param id path string true "Product ID"
+// @Success 204 "No Content"
+// @Security BearerAuth
+// @Router /inventory/products/{id} [delete]
+func DeleteProduct(c *gin.Context) {
+	id := c.Param("id")
+	orgID, _ := c.Get("org_id")
+	userID, _ := c.Get("user_id")
+
+	var product models.Product
+	if err := database.DB.First(&product, "id = ? AND organization_id = ?", id, orgID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		return
+	}
+
+	if err := database.DB.Delete(&product).Error; err != nil {
+		pkg.Log.Error("failed to delete product", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete product"})
+		return
+	}
+
+	// Audit Log
+	database.DB.Create(&models.AuditLog{
+		OrganizationID: orgID.(uuid.UUID),
+		UserID:         userID.(uuid.UUID),
+		Action:         "DELETE_PRODUCT",
+		Entity:         "PRODUCT",
+		EntityID:       id,
+		IPAddress:      c.ClientIP(),
+		UserAgent:      c.Request.UserAgent(),
+	})
+
+	c.Status(http.StatusNoContent)
 }
 
 // --- STOCK ADJUSTMENT HANDLERS ---
@@ -265,10 +413,10 @@ type MovementResponse struct {
 	CreatedAt      time.Time `json:"created_at"`
 }
 
-type StockAdjustmentRequest struct {
+type AdjustStockRequest struct {
 	ProductID uuid.UUID `json:"product_id" binding:"required"`
 	Quantity  float64   `json:"quantity" binding:"required"`
-	Type      string    `json:"type" binding:"required,oneof=IN OUT ADJUSTMENT"`
+	Type      string    `json:"type" binding:"required,oneof=IN OUT ADJUSTMENT RESTOCK"`
 	Reason    string    `json:"reason"`
 }
 
@@ -278,12 +426,12 @@ type StockAdjustmentRequest struct {
 // @Tags inventory
 // @Accept json
 // @Produce json
-// @Param request body StockAdjustmentRequest true "Adjustment details"
+// @Param request body AdjustStockRequest true "Adjustment details"
 // @Success 200 {object} MovementResponse
 // @Security BearerAuth
 // @Router /inventory/adjust [post]
 func AdjustStock(c *gin.Context) {
-	var req StockAdjustmentRequest
+	var req AdjustStockRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
@@ -303,7 +451,7 @@ func AdjustStock(c *gin.Context) {
 
 		prevQty := product.Quantity
 		var newQty float64
-		if req.Type == "IN" {
+		if req.Type == "IN" || req.Type == "RESTOCK" {
 			newQty = prevQty + req.Quantity
 		} else if req.Type == "OUT" || req.Type == "ADJUSTMENT" {
 			// For ADJUSTMENT, req.Quantity can be negative

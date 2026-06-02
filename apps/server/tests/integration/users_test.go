@@ -77,7 +77,6 @@ func TestUserManagementFlow(t *testing.T) {
 		PhoneNumber:      "123456789",
 		BusinessLocation: "Test Location",
 		ManagerEmail:     "admin@test.com",
-		ManagerPassword:  "password123",
 		ManagerPIN:       "1234",
 	}
 	jsonBytes, _ := json.Marshal(regReq)
@@ -88,8 +87,8 @@ func TestUserManagementFlow(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	loginReq := auth.LoginRequest{
-		Email:    "admin@test.com",
-		Password: "password123",
+		Username: "admin@test.com",
+		PIN:      "1234",
 	}
 	jsonBytes, _ = json.Marshal(loginReq)
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBuffer(jsonBytes))

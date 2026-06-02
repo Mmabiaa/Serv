@@ -27,6 +27,7 @@ type Product struct {
 	Barcode          string    `gorm:"index"`
 	Price            float64   `gorm:"type:decimal(10,2);not null"`
 	CostPrice        float64   `gorm:"type:decimal(10,2)"`
+	ImageURL         string
 	Quantity         float64   `gorm:"type:decimal(10,3);default:0"` // Supports fractional units (kg, liters)
 	MinStockLevel    float64   `gorm:"type:decimal(10,3);default:0"`
 	Unit             string    `gorm:"default:'pcs'"` // pcs, kg, l, etc.

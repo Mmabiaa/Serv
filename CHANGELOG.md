@@ -85,6 +85,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive integration tests for the full sales lifecycle (Register -> Stock -> Sale -> Void -> Stock Reversal).
   - Updated Swagger documentation with high-fidelity DTO responses.
 
+## [Phase 8: UI/UX & Enterprise Refactor] - 2026-06-02
+
+### Changed
+- **Authentication Overhaul**: 
+  - Unified login flow for all users (Managers and Staff) using Username + PIN.
+  - Eliminated the insecure staff list selection to prevent data leakage.
+  - Implemented automated role-based redirection: Managers are directed to the Executive Dashboard, while Staff are directed to the POS Terminal.
+- **Frontend Architecture**:
+  - Migrated from TanStack Start to a standard Vite + React 19 SPA for improved stability and performance.
+  - Reorganized project structure into a modular, feature-based organization (KISS/SOLID principles).
+  - Extracted shared and complex UI components into feature directories (`src/features`).
+- **Data Integration**:
+  - Removed all mock data from the frontend.
+- **Enterprise Engineering**:
+  - Implemented **Professional Receipt Engine**: Hidden iframe-based native printing for supermarket-style thermal receipts.
+  - Standardized **Data Architecture**: Synchronized all frontend models with backend snake_case JSON responses.
+  - Implemented **Resilient State Management**: Zustand selectors now use `useMemo` for stable identity, preventing React 19 infinite update loops.
+  - Hardened **Security PINs**: Enabled flexible 4-digit or 6-digit PIN support across the entire stack (API validation, DB models, and POS keypad).
+  - Automated **Customer CRM**: Transactions now automatically create or update customer records using phone numbers as primary keys, with spend/visit tracking.
+  - Real-time **Stock Synchronization**: Frontend now triggers atomic refetches of product and report data immediately after successful checkouts or restocks.
+  - Unified **Activity Monitoring**: Replaced mock security logs with a real-time audit trail fetched from the backend `/api/v1/users/activity` endpoint.
+  - **Localization**: Changed system currency to Ghana Cedis (GHS/GH₵) with localized formatting.
+  - **API Expansion**: Added backend handlers for `PUT` (Update) and `DELETE` (Remove) for inventory management.
+  - Improved **RESTful Standards**:- Standardized all API calls to include `limit=100` for consistent performance and scalability.
+- **Retail & Financial Core**:
+  - Switched system currency to **Ghana Cedis (GHS/GH₵)** with precise 2-decimal formatting.
+  - Implemented **Immutable Stock Ledger**: Stock levels can no longer be directly overwritten; all changes (Restocks, Sales, Manual Adjustments) now generate verifiable movement records.
+  - Developed **Transaction-Based CRM**: Automated customer profiling using phone numbers as primary keys, featuring lifetime spend tracking and visit history.
+  - Enhanced **Executive Reporting**: Real-time sales analytics and weekly performance charts now fetch data from production APIs instead of mock objects.
+  - Hardened **Audit Monitoring**: Fully integrated the backend's security audit trail into the Manager Portal, tracking all sensitive organizational actions.
+  - Fixed **Data Synchronization**: Implemented atomic state refetching after checkouts and stock adjustments to ensure absolute UI consistency.
+  - Resolved **Type Safety Errors**: Synchronized frontend `Transaction` and `Customer` types with backend snake_case JSON schemas.
+  - Optimized **Printing Experience**: Implemented a non-disruptive, hidden-iframe native printing strategy for supermarket-grade receipts. Implemented full API integration with the Go backend via a secured `api-client`.
+  - Switched from local state persistence to server-driven data fetching for Products, Staff, Customers, and Transactions.
+- **UI/UX Enhancements**:
+  - Implemented a high-end, 10x engineer quality aesthetic using Tailwind CSS 4.
+  - Standardized page naming and routing for better maintainability.
+  - Improved real-time feedback with `sonner` toasts and loading states.
+
 ## [Phase 5: Customer Management] - 2026-05-29
 
 ### Added

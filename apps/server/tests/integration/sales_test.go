@@ -86,7 +86,6 @@ func TestSalesFlow(t *testing.T) {
 		PhoneNumber:      "123456789",
 		BusinessLocation: "Test Location",
 		ManagerEmail:     "sales@test.com",
-		ManagerPassword:  "password123",
 		ManagerPIN:       "1234",
 	}
 	jsonBytes, _ := json.Marshal(regReq)
@@ -95,7 +94,7 @@ func TestSalesFlow(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	loginReq := auth.LoginRequest{Email: "sales@test.com", Password: "password123"}
+	loginReq := auth.LoginRequest{Username: "sales@test.com", PIN: "1234"}
 	jsonBytes, _ = json.Marshal(loginReq)
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")

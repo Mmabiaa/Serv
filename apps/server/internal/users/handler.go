@@ -20,7 +20,7 @@ type CreateStaffRequest struct {
 	Username    string `json:"username" binding:"required"`
 	PhoneNumber string `json:"phone_number"`
 	Email       string `json:"email" binding:"required,email"`
-	StaffPIN    string `json:"staff_pin" binding:"required,len=4"`
+	StaffPIN    string `json:"staff_pin" binding:"required,min=4,max=6"`
 	Role        string `json:"role" binding:"required,oneof=manager cashier"`
 }
 
