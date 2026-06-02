@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { categories } from "@/store/pos-data";
+import { useCategories, fetchCategories } from "@/store/pos-store";
 
 interface CategoryBarProps {
   selected: string;
@@ -7,9 +8,17 @@ interface CategoryBarProps {
 }
 
 export function CategoryBar({ selected, onSelect }: CategoryBarProps) {
+  const categories = useCategories();
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const allCategories = ["All Inventory", ...categories.map(c => c.name)];
+
   return (
     <div className="flex gap-2 overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 no-scrollbar pb-1">
-      {categories.map((c) => {
+      {allCategories.map((c) => {
         const active = c === selected;
         return (
           <button

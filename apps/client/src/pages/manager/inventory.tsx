@@ -30,7 +30,7 @@ export function InventoryPage() {
           <div>
             <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Inventory</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {products.length} products · {products.filter((p) => p.stock < 10).length} low stock
+              {products.length} products · {products.filter((p) => p.quantity < 10).length} low stock
             </p>
           </div>
           <div className="flex items-center gap-2">

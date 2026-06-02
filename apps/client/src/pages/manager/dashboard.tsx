@@ -1,8 +1,17 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Clock } from "lucide-react";
-import { fmt, weeklySales } from "@/store/pos-data";
-import { useProducts, useStaff, useTransactions, fetchProducts, fetchStaff, fetchTransactions } from "@/store/pos-store";
+import { fmt } from "@/store/pos-data";
+import { 
+  useProducts, 
+  useStaff, 
+  useTransactions, 
+  useDailyReports,
+  fetchProducts, 
+  fetchStaff, 
+  fetchTransactions,
+  fetchReports 
+} from "@/store/pos-store";
 
 // Modular components
 import { StatsGrid } from "@/features/dashboard/components/stats-grid";
@@ -14,16 +23,26 @@ export function DashboardPage() {
   const products = useProducts();
   const staff = useStaff();
   const transactions = useTransactions();
+  const reports = useDailyReports();
 
   useEffect(() => {
     fetchProducts();
     fetchStaff();
     fetchTransactions();
+    fetchReports();
   }, []);
 
-  const low = products.filter((p) => p.stock < 10);
+  const weeklySales = useMemo(() => {
+    return reports.slice(0, 7).reverse().map(r => ({
+      day: new Date(r.date).toLocaleDateString('en-US', { weekday: 'short' }),
+      value: r.total_sales
+    }));
+  }, [reports]);
+
+  const low = products.filter((p) => p.quantity < 10);
   const max = Math.max(...weeklySales.map((w) => w.value));
-  const todayRevenue = transactions.reduce((s, t) => s + t.total, 0);
+  const todayRevenue = transactions.reduce((s, t) => s + t.totalAmount, 0);
+  const todayOrders = transactions.length;
 
   return (
     <ManagerOnly>
@@ -59,9 +78,9 @@ export function DashboardPage() {
 
         <StatsGrid
           todayRevenue={fmt(todayRevenue)}
-          txCount={transactions.length}
-          avgTx={transactions.length > 0 ? fmt(Math.round(todayRevenue / transactions.length)) : "—"}
-          activeStaff={staff.filter((s) => s.online).length}
+          txCount={todayOrders}
+          avgTx={todayOrders > 0 ? fmt(Math.round(todayRevenue / todayOrders)) : "—"}
+          activeStaff={staff.filter((s) => s.isActive).length}
           totalStaff={staff.length}
           lowStockCount={low.length}
         />

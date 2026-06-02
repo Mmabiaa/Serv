@@ -44,15 +44,15 @@ export function InventoryList({ products, onEdit }: InventoryListProps) {
                     <p className="font-bold truncate">{p.name}</p>
                   </div>
                 </td>
-                <td className="px-5 py-4 text-muted-foreground">{p.category}</td>
+                <td className="px-5 py-4 text-muted-foreground">{p.category_name}</td>
                 <td className="px-5 py-4">
                   <span
                     className={
                       "font-bold font-mono " +
-                      (p.stock < 10 ? "text-warning" : "text-foreground")
+                      (p.quantity < 10 ? "text-warning" : "text-foreground")
                     }
                   >
-                    {p.stock}
+                    {p.quantity}
                   </span>
                 </td>
                 <td className="px-5 py-4 text-right font-bold font-mono">{fmt(p.price)}</td>

@@ -9,7 +9,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product: p }: ProductCardProps) {
-  const low = p.stock < 10;
+  const low = p.quantity < 10;
   return (
     <button
       type="button"
@@ -25,7 +25,7 @@ export function ProductCard({ product: p }: ProductCardProps) {
           />
         ) : (
           <span aria-hidden className="group-hover:scale-110 transition-transform duration-500">
-            {p.emoji}
+            {p.emoji || "📦"}
           </span>
         )}
         <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors" />
@@ -45,7 +45,7 @@ export function ProductCard({ product: p }: ProductCardProps) {
             low ? "text-warning bg-warning/15" : "text-success bg-success/10"
           )}
         >
-          {low ? `${p.stock} left` : "In stock"}
+          {low ? `${p.quantity} left` : "In stock"}
         </span>
         <span className="w-10 h-10 rounded-xl bg-muted border border-border grid place-items-center text-primary font-bold group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary group-hover:rotate-90 transition-all duration-300 shadow-sm">
           <Plus className="w-5 h-5" />

@@ -30,17 +30,17 @@ export function InventoryCards({ products, onEdit }: InventoryCardsProps) {
           </div>
           <h3 className="text-sm font-bold truncate">{p.name}</h3>
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">
-            {p.category}
+            {p.category_name}
           </p>
           <div className="mt-4 flex items-center justify-between">
             <p className="text-sm font-bold font-mono">{fmt(p.price)}</p>
             <span
               className={
                 "text-[10px] font-bold font-mono " +
-                (p.stock < 10 ? "text-warning" : "text-muted-foreground")
+                (p.quantity < 10 ? "text-warning" : "text-muted-foreground")
               }
             >
-              {p.stock} units
+              {p.quantity} units
             </span>
           </div>
         </div>

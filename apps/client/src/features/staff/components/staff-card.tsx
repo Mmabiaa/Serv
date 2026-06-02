@@ -18,27 +18,27 @@ export function StaffCard({ member: s, onView, onEdit }: StaffCardProps) {
           <span
             className={
               "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card " +
-              (s.online ? "bg-success" : "bg-muted-foreground/40")
+              (s.isActive ? "bg-success" : "bg-muted-foreground/40")
             }
           />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold truncate">{s.name}</p>
+          <p className="text-sm font-bold truncate">{s.fullName}</p>
           <p className="text-[11px] text-muted-foreground capitalize">{s.role}</p>
         </div>
       </div>
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Today's sales
+            Account Status
           </p>
-          <p className="text-sm font-bold font-mono mt-0.5">{s.sales}</p>
+          <p className="text-sm font-bold mt-0.5">{s.isActive ? "Active" : "Disabled"}</p>
         </div>
         <div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Revenue
+            Username
           </p>
-          <p className="text-sm font-bold font-mono mt-0.5">{fmt(s.revenue)}</p>
+          <p className="text-sm font-bold mt-0.5">{s.username}</p>
         </div>
       </div>
       <div className="mt-4 pt-4 border-t border-border flex gap-2">

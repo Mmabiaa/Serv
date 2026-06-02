@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Bluetooth, Printer, Cloud, Globe, Lock, KeyRound, Check } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/store/auth-store";
 import { changeStaffPin, useStaff } from "@/store/pos-store";
 
@@ -51,14 +52,11 @@ export function SettingsPage() {
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus(null);
-    if (!me) return;
-    if (current !== me.pin) {
-      setStatus({ type: "err", msg: "Current PIN is incorrect." });
-      return;
-    }
+    if (!user) return;
+    
     if (next.length !== 4) {
       setStatus({ type: "err", msg: "New PIN must be 4 digits." });
       return;
@@ -67,11 +65,18 @@ export function SettingsPage() {
       setStatus({ type: "err", msg: "PINs don't match." });
       return;
     }
-    changeStaffPin(me.id, next);
-    setStatus({ type: "ok", msg: "PIN updated." });
-    setCurrent("");
-    setNext("");
-    setConfirm("");
+    
+    try {
+      await changeStaffPin(current, next);
+      setStatus({ type: "ok", msg: "PIN updated." });
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+      toast.success("Security PIN updated successfully");
+    } catch (err: any) {
+      setStatus({ type: "err", msg: err.message || "Failed to update PIN." });
+      toast.error(err.message || "Failed to update PIN");
+    }
   };
 
   return (

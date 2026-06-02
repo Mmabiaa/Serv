@@ -27,14 +27,16 @@ export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
-            const name = fd.get("name") as string;
+            const fullName = fd.get("name") as string;
+            const username = fd.get("username") as string;
+            const email = fd.get("email") as string;
             const role = fd.get("role") as "manager" | "cashier";
-            const pin = fd.get("pin") as string;
+            const staff_pin = fd.get("pin") as string;
 
             if (dialog.type === "create") {
-              addStaff({ name, role, pin, sales: 0, revenue: 0, online: false });
+              addStaff({ full_name: fullName, username, email, role, staff_pin });
             } else {
-              updateStaff({ ...dialog.member, name, role, pin });
+              updateStaff({ ...dialog.member, fullName, role });
             }
             onClose();
           }}
@@ -46,7 +48,30 @@ export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
             </label>
             <input
               name="name"
-              defaultValue={dialog.type === "edit" ? dialog.member.name : ""}
+              defaultValue={dialog.type === "edit" ? dialog.member.fullName : ""}
+              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10"
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+              Username
+            </label>
+            <input
+              name="username"
+              defaultValue={dialog.type === "edit" ? dialog.member.username : ""}
+              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10"
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+              Email Address
+            </label>
+            <input
+              name="email"
+              type="email"
+              defaultValue={dialog.type === "edit" ? (dialog.member as any).email : ""}
               className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10"
               required
             />
@@ -64,18 +89,19 @@ export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
               <option value="manager">Manager</option>
             </select>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-              Terminal PIN (4-digits)
-            </label>
-            <input
-              name="pin"
-              defaultValue={dialog.type === "edit" ? dialog.member.pin : ""}
-              maxLength={4}
-              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm font-mono focus:outline-none focus:ring-4 focus:ring-primary/10"
-              required
-            />
-          </div>
+          {dialog.type === "create" && (
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
+                Terminal PIN (4-digits)
+              </label>
+              <input
+                name="pin"
+                maxLength={4}
+                className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm font-mono focus:outline-none focus:ring-4 focus:ring-primary/10"
+                required
+              />
+            </div>
+          )}
           <button
             type="submit"
             className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 mt-2"

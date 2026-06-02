@@ -30,10 +30,12 @@ export function PosTerminalPage() {
     () =>
       products.filter(
         (p) =>
-          (cat === "All Inventory" || p.category === cat) &&
+          (cat === "All Inventory" || p.category_name === cat) &&
           (q === "" ||
             p.name.toLowerCase().includes(q.toLowerCase()) ||
-            p.id.toLowerCase().includes(q.toLowerCase()))
+            p.id.toLowerCase().includes(q.toLowerCase()) ||
+            p.sku?.toLowerCase().includes(q.toLowerCase()) ||
+            p.barcode?.includes(q))
       ),
     [q, cat, products]
   );

@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { X, Upload, Trash2 } from "lucide-react";
-import { categories, type Product } from "@/store/pos-data";
-import { addProduct, deleteProduct, updateProduct } from "@/store/pos-store";
+import { type Product } from "@/store/pos-data";
+import { addProduct, deleteProduct, updateProduct, useCategories, fetchCategories } from "@/store/pos-store";
 
 interface ProductDialogProps {
   product: Product | null;
@@ -11,6 +11,11 @@ interface ProductDialogProps {
 export function ProductDialog({ product, onClose }: ProductDialogProps) {
   const [img, setImg] = useState<string | undefined>(product?.imageUrl);
   const upRef = useRef<HTMLInputElement>(null);
+  const categories = useCategories();
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -40,19 +45,18 @@ export function ProductDialog({ product, onClose }: ProductDialogProps) {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
             const name = fd.get("name") as string;
-            const category = fd.get("category") as string;
+            const category_id = fd.get("category") as string;
             const price = Number(fd.get("price"));
-            const stock = Number(fd.get("stock"));
+            const quantity = Number(fd.get("stock"));
 
             if (product) {
-              updateProduct({ ...product, name, category, price, stock, imageUrl: img });
+              updateProduct({ ...product, name, category_id, price, quantity, imageUrl: img });
             } else {
               addProduct({
                 name,
-                category,
+                category_id,
                 price,
-                stock,
-                emoji: "📦",
+                quantity,
                 imageUrl: img,
               });
             }
@@ -99,12 +103,12 @@ export function ProductDialog({ product, onClose }: ProductDialogProps) {
               </label>
               <select
                 name="category"
-                defaultValue={product?.category || categories[1]}
+                defaultValue={product?.category_id}
                 className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10"
               >
-                {categories.slice(1).map((c) => (
-                  <option key={c} value={c}>
-                    {c}
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>

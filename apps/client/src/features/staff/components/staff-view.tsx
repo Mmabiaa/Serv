@@ -27,7 +27,7 @@ export function StaffView({ member, onClose }: StaffViewProps) {
               {member.initials}
             </div>
             <div>
-              <p className="text-base font-bold">{member.name}</p>
+              <p className="text-base font-bold">{member.fullName}</p>
               <p className="text-xs text-muted-foreground capitalize">{member.role}</p>
             </div>
           </div>
@@ -36,13 +36,13 @@ export function StaffView({ member, onClose }: StaffViewProps) {
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 Staff ID
               </p>
-              <p className="text-sm font-mono mt-0.5">{member.id}</p>
+              <p className="text-sm font-mono mt-0.5 truncate">{member.id}</p>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Terminal PIN
+                Username
               </p>
-              <p className="text-sm font-mono mt-0.5">{member.pin}</p>
+              <p className="text-sm font-bold mt-0.5">{member.username}</p>
             </div>
           </div>
           <button

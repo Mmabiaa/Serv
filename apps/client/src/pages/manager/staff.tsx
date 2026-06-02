@@ -29,7 +29,7 @@ export function StaffPage() {
           <div>
             <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Staff</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {staff.filter((s) => s.online).length} active · {staff.length} total
+              {staff.filter((s) => s.isActive).length} active · {staff.length} total
             </p>
           </div>
           <button

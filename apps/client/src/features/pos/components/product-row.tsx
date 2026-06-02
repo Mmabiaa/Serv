@@ -9,7 +9,7 @@ interface ProductRowProps {
 }
 
 export function ProductRow({ product: p }: ProductRowProps) {
-  const low = p.stock < 10;
+  const low = p.quantity < 10;
   return (
     <button
       type="button"
@@ -17,20 +17,20 @@ export function ProductRow({ product: p }: ProductRowProps) {
       className="w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors text-left group"
     >
       <div className="w-12 h-12 rounded-xl bg-muted grid place-items-center text-2xl shrink-0 group-hover:scale-110 transition-transform">
-        {p.emoji}
+        {p.emoji || "📦"}
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-bold truncate group-hover:text-primary transition-colors">
           {p.name}
         </h3>
         <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-          {p.category}
+          {p.category_name}
         </p>
       </div>
       <div className="text-right px-4">
         <p className="text-sm font-black font-mono text-primary">{fmt(p.price)}</p>
         <p className={cn("text-[9px] font-bold uppercase", low ? "text-warning" : "text-success")}>
-          {low ? `${p.stock} left` : "In stock"}
+          {low ? `${p.quantity} left` : "In stock"}
         </p>
       </div>
       <div className="w-10 h-10 rounded-xl bg-muted border border-border grid place-items-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">

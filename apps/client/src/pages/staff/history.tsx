@@ -14,9 +14,8 @@ export function SalesHistoryPage() {
   const [q, setQ] = useState("");
   
   const filtered = transactions.filter(t => 
-    t.id.toLowerCase().includes(q.toLowerCase()) || 
-    t.customerName?.toLowerCase().includes(q.toLowerCase()) ||
-    t.staffName.toLowerCase().includes(q.toLowerCase())
+    t.receiptNumber.toLowerCase().includes(q.toLowerCase()) || 
+    t.customerName?.toLowerCase().includes(q.toLowerCase())
   );
 
   return (
@@ -43,7 +42,7 @@ export function SalesHistoryPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           type="text"
-          placeholder="Search by ID, customer or staff..."
+          placeholder="Search by Receipt # or customer..."
           className="w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all text-sm font-medium"
         />
       </div>
@@ -55,7 +54,6 @@ export function SalesHistoryPage() {
               <tr className="border-b border-slate-50 bg-slate-50/30">
                 <th className="text-left px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Transaction</th>
                 <th className="text-left px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customer</th>
-                <th className="text-left px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Staff</th>
                 <th className="text-left px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Method</th>
                 <th className="text-right px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
                 <th className="px-4 py-5"></th>
@@ -65,29 +63,22 @@ export function SalesHistoryPage() {
               {filtered.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-8 py-6">
-                    <p className="text-sm font-black text-slate-900">{t.id}</p>
+                    <p className="text-sm font-black text-slate-900">{t.receiptNumber}</p>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-                      {t.time} · {t.items} items
+                      {new Date(t.createdAt).toLocaleTimeString()} · {t.items?.length || 0} items
                     </p>
                   </td>
                   <td className="px-4 py-6">
                     <p className="text-sm font-bold text-slate-700">{t.customerName || "Walk-in"}</p>
-                  </td>
-                  <td className="px-4 py-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-slate-100 text-[10px] font-black grid place-items-center text-slate-600">
-                        {t.staffName.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <p className="text-xs font-bold text-slate-700">{t.staffName}</p>
-                    </div>
+                    <p className="text-[10px] text-slate-400">{t.customerPhone}</p>
                   </td>
                   <td className="px-4 py-6">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                      {t.method}
+                      {t.paymentMethod}
                     </span>
                   </td>
                   <td className="px-8 py-6 text-right">
-                    <p className="text-sm font-black text-primary font-mono">{fmt(t.total)}</p>
+                    <p className="text-sm font-black text-primary font-mono">{fmt(t.totalAmount)}</p>
                   </td>
                   <td className="px-4 py-6 text-right">
                     <button className="w-8 h-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-400">

@@ -85,6 +85,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive integration tests for the full sales lifecycle (Register -> Stock -> Sale -> Void -> Stock Reversal).
   - Updated Swagger documentation with high-fidelity DTO responses.
 
+## [Phase 8: UI/UX & Enterprise Refactor] - 2026-06-02
+
+### Changed
+- **Authentication Overhaul**: 
+  - Unified login flow for all users (Managers and Staff) using Username + PIN.
+  - Eliminated the insecure staff list selection to prevent data leakage.
+  - Implemented automated role-based redirection: Managers are directed to the Executive Dashboard, while Staff are directed to the POS Terminal.
+- **Frontend Architecture**:
+  - Migrated from TanStack Start to a standard Vite + React 19 SPA for improved stability and performance.
+  - Reorganized project structure into a modular, feature-based organization (KISS/SOLID principles).
+  - Extracted shared and complex UI components into feature directories (`src/features`).
+- **Data Integration**:
+  - Removed all mock data from the frontend.
+  - Implemented full API integration with the Go backend via a secured `api-client`.
+  - Switched from local state persistence to server-driven data fetching for Products, Staff, Customers, and Transactions.
+- **UI/UX Enhancements**:
+  - Implemented a high-end, 10x engineer quality aesthetic using Tailwind CSS 4.
+  - Standardized page naming and routing for better maintainability.
+  - Improved real-time feedback with `sonner` toasts and loading states.
+
 ## [Phase 5: Customer Management] - 2026-05-29
 
 ### Added
