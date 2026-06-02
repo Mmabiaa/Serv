@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Filter, ArrowLeft, MoreVertical, Ban } from "lucide-react";
 import { fmt } from "@/store/pos-data";
-import { useTransactions } from "@/store/pos-store";
+import { useTransactions, fetchTransactions } from "@/store/pos-store";
 import { cn } from "@/lib/utils";
 
 export function SalesHistoryPage() {
   const transactions = useTransactions();
+
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
+
   const [q, setQ] = useState("");
   
   const filtered = transactions.filter(t => 

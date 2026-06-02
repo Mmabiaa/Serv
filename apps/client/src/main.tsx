@@ -4,25 +4,25 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 
 // Layouts
-import { AppLayout } from "@/pages/AppLayout";
+import { AppLayout } from "@/pages/app-layout";
 
 // Shared Pages
-import { LoginPage } from "@/pages/LoginPage";
-import { SettingsPage } from "@/pages/SettingsPage";
+import { LoginPage } from "@/pages/login";
+import { SettingsPage } from "@/pages/settings";
 
 // Staff Pages
-import { DashboardPage as StaffDashboard } from "@/pages/staff/DashboardPage";
-import { PosTerminalPage } from "@/pages/staff/PosTerminalPage";
-import { SalesHistoryPage } from "@/pages/staff/SalesHistoryPage";
+import { DashboardPage as StaffDashboard } from "@/pages/staff/dashboard";
+import { PosTerminalPage } from "@/pages/staff/pos";
+import { SalesHistoryPage } from "@/pages/staff/history";
 
 // Manager Pages
-import { DashboardPage as ManagerDashboard } from "@/pages/manager/DashboardPage";
-import { InventoryPage } from "@/pages/manager/InventoryPage";
-import { CustomersPage } from "@/pages/manager/CustomersPage";
-import { ReportsPage } from "@/pages/manager/ReportsPage";
-import { StaffPage } from "@/pages/manager/StaffPage";
-import { MovementsPage } from "@/pages/manager/MovementsPage";
-import { ActivityPage } from "@/pages/manager/ActivityPage";
+import { DashboardPage as ManagerDashboard } from "@/pages/manager/dashboard";
+import { InventoryPage } from "@/pages/manager/inventory";
+import { CustomersPage } from "@/pages/manager/customers";
+import { ReportsPage } from "@/pages/manager/reports";
+import { StaffPage } from "@/pages/manager/staff";
+import { MovementsPage } from "@/pages/manager/movements";
+import { ActivityPage } from "@/pages/manager/activity";
 
 import { useAuth } from "@/store/auth-store";
 

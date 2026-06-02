@@ -1,7 +1,8 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Clock } from "lucide-react";
 import { fmt, weeklySales } from "@/store/pos-data";
-import { useProducts, useStaff, useTransactions } from "@/store/pos-store";
+import { useProducts, useStaff, useTransactions, fetchProducts, fetchStaff, fetchTransactions } from "@/store/pos-store";
 
 // Modular components
 import { StatsGrid } from "@/features/dashboard/components/stats-grid";
@@ -13,6 +14,13 @@ export function DashboardPage() {
   const products = useProducts();
   const staff = useStaff();
   const transactions = useTransactions();
+
+  useEffect(() => {
+    fetchProducts();
+    fetchStaff();
+    fetchTransactions();
+  }, []);
+
   const low = products.filter((p) => p.stock < 10);
   const max = Math.max(...weeklySales.map((w) => w.value));
   const todayRevenue = transactions.reduce((s, t) => s + t.total, 0);

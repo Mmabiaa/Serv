@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Grid, List } from "lucide-react";
 import { cartCount, cartTotal, useCart } from "@/store/cart-store";
 import { fmt } from "@/store/pos-data";
-import { useProducts } from "@/store/pos-store";
+import { useProducts, fetchProducts } from "@/store/pos-store";
 import { CheckoutSheet } from "@/features/pos/components/checkout-sheet";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,11 @@ import { ProductRow } from "@/features/pos/components/product-row";
 export function PosTerminalPage() {
   const cart = useCart();
   const products = useProducts();
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("All Inventory");
   const [checkout, setCheckout] = useState(false);

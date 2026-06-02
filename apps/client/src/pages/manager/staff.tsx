@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { fmt } from "@/store/pos-data";
-import { useStaff, type StaffMember } from "@/store/pos-store";
+import { useStaff, type StaffMember, fetchStaff } from "@/store/pos-store";
 import { ManagerOnly } from "@/features/layout/components/app-shell";
 import { StaffDialog } from "@/features/staff/components/staff-dialog";
 import { StaffView } from "@/features/staff/components/staff-view";
+import { StaffCard } from "@/features/staff/components/staff-card";
 
 type DialogMode =
   | { type: "view"; member: StaffMember }
@@ -14,6 +15,11 @@ type DialogMode =
 
 export function StaffPage() {
   const staff = useStaff();
+
+  useEffect(() => {
+    fetchStaff();
+  }, []);
+
   const [dialog, setDialog] = useState<DialogMode>(null);
 
   return (

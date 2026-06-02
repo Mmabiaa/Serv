@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { api } from "@/lib/api-client";
 import {
   customers as seedCustomers,
   products as seedProducts,
@@ -58,6 +59,12 @@ interface PosState {
   
   upsertCustomerFromSale: (name: string, phone: string, total: number) => { id: string; name: string };
   recordTransaction: (tx: Omit<Transaction, "id" | "time">) => Transaction;
+  
+  // Async actions
+  fetchProducts: () => Promise<void>;
+  fetchStaff: () => Promise<void>;
+  fetchCustomers: () => Promise<void>;
+  fetchTransactions: () => Promise<void>;
 }
 
 // Initial data processing
@@ -153,6 +160,42 @@ export const usePosStore = create<PosState>()(
         }));
         return newTx;
       },
+
+      fetchProducts: async () => {
+        try {
+          const products = await api.get<Product[]>("/inventory/products");
+          set({ products });
+        } catch (err) {
+          console.error("Failed to fetch products:", err);
+        }
+      },
+
+      fetchStaff: async () => {
+        try {
+          const staff = await api.get<StaffMember[]>("/users/staff");
+          set({ staff });
+        } catch (err) {
+          console.error("Failed to fetch staff:", err);
+        }
+      },
+
+      fetchCustomers: async () => {
+        try {
+          const customers = await api.get<Customer[]>("/customers");
+          set({ customers });
+        } catch (err) {
+          console.error("Failed to fetch customers:", err);
+        }
+      },
+
+      fetchTransactions: async () => {
+        try {
+          const transactions = await api.get<Transaction[]>("/sales/history");
+          set({ transactions });
+        } catch (err) {
+          console.error("Failed to fetch transactions:", err);
+        }
+      },
     }),
     {
       name: "kigali-pos-data",
@@ -176,3 +219,8 @@ export const deleteStaff = (id: string) => usePosStore.getState().deleteStaff(id
 export const changeStaffPin = (id: string, pin: string) => usePosStore.getState().changeStaffPin(id, pin);
 export const upsertCustomerFromSale = (name: string, phone: string, total: number) => usePosStore.getState().upsertCustomerFromSale(name, phone, total);
 export const recordTransaction = (tx: any) => usePosStore.getState().recordTransaction(tx);
+
+export const fetchProducts = () => usePosStore.getState().fetchProducts();
+export const fetchStaff = () => usePosStore.getState().fetchStaff();
+export const fetchCustomers = () => usePosStore.getState().fetchCustomers();
+export const fetchTransactions = () => usePosStore.getState().fetchTransactions();

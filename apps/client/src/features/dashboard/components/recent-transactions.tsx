@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link } from "react-router-dom";
 import { ShoppingBag, Check } from "lucide-react";
 import { fmt } from "@/store/pos-data";
 import type { Transaction } from "@/store/pos-store";
