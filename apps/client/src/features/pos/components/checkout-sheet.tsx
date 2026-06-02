@@ -165,11 +165,11 @@ export function CheckoutSheet({
                     <p className="text-sm text-slate-500 mt-1">Manager PIN required for <span className="text-slate-900 font-bold">Credit</span> payment.</p>
                   </div>
                   <div className="flex justify-center gap-3">
-                    {[1, 2, 3, 4].map((i) => (
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
                       <div 
                         key={i} 
                         className={cn(
-                          "w-14 h-14 rounded-2xl border-2 flex items-center justify-center text-xl font-black transition-all",
+                          "w-12 h-12 rounded-xl border-2 flex items-center justify-center text-xl font-black transition-all",
                           pin.length >= i ? "border-primary bg-primary/5 text-primary scale-110" : "border-slate-200 bg-slate-50 text-slate-300"
                         )}
                       >
@@ -183,8 +183,11 @@ export function CheckoutSheet({
                         key={n}
                         onClick={() => {
                           if (n === "C") setPin("");
-                          else if (n === "OK") { if (pin.length === 4) charge(); }
-                          else if (pin.length < 4) setPin(p => p + n);
+                          else if (n === "OK") { 
+                            if (pin.length === 4 || pin.length === 6) charge(); 
+                            else toast.error("Invalid PIN", { description: "PIN must be 4 or 6 digits." });
+                          }
+                          else if (pin.length < 6) setPin(p => p + n);
                         }}
                         className={cn(
                           "h-14 rounded-2xl font-black text-lg transition-all active:scale-90",

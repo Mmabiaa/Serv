@@ -109,11 +109,11 @@ export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
           {dialog.type === "create" && (
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-                Terminal PIN (4-digits)
+                Terminal PIN (4 or 6 digits)
               </label>
               <input
                 name="pin"
-                maxLength={4}
+                maxLength={6}
                 className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm font-mono focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
                 required
                 disabled={loading}

@@ -16,9 +16,9 @@ export function LoginPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || pin.length < 6) {
-      toast.error("Invalid input", {
-        description: "Please enter a valid username and 6-digit PIN.",
+    if (!username || !pin) {
+      toast.error("Required fields", {
+        description: "Please enter both your username and security PIN.",
       });
       return;
     }

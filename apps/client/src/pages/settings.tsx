@@ -57,8 +57,8 @@ export function SettingsPage() {
     setStatus(null);
     if (!user) return;
     
-    if (next.length !== 4) {
-      setStatus({ type: "err", msg: "New PIN must be 4 digits." });
+    if (!next || !confirm) {
+      setStatus({ type: "err", msg: "Please enter and confirm your new PIN." });
       return;
     }
     if (next !== confirm) {
@@ -103,7 +103,7 @@ export function SettingsPage() {
               </label>
               <input
                 type="password"
-                maxLength={4}
+                maxLength={6}
                 value={current}
                 onChange={(e) => setCurrent(e.target.value)}
                 className="w-full bg-muted/50 border border-border rounded-xl px-3 py-3 text-sm font-mono focus:outline-none focus:ring-4 focus:ring-primary/10"
@@ -113,11 +113,11 @@ export function SettingsPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
-                New 4-digit PIN
+                New Security PIN (4 or 6 digits)
               </label>
               <input
                 type="password"
-                maxLength={4}
+                maxLength={6}
                 value={next}
                 onChange={(e) => setNext(e.target.value)}
                 className="w-full bg-muted/50 border border-border rounded-xl px-3 py-3 text-sm font-mono focus:outline-none focus:ring-4 focus:ring-primary/10"
@@ -129,7 +129,7 @@ export function SettingsPage() {
               </label>
               <input
                 type="password"
-                maxLength={4}
+                maxLength={6}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 className="w-full bg-muted/50 border border-border rounded-xl px-3 py-3 text-sm font-mono focus:outline-none focus:ring-4 focus:ring-primary/10"
