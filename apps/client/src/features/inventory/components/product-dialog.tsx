@@ -120,7 +120,7 @@ export function ProductDialog({ product, onClose }: ProductDialogProps) {
               <input
                 name="stock"
                 type="number"
-                defaultValue={product?.stock ?? 0}
+                defaultValue={product?.quantity ?? 0}
                 className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm font-mono focus:outline-none focus:ring-4 focus:ring-primary/10"
                 required
               />

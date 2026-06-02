@@ -86,7 +86,7 @@ export function LoginPage() {
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. jdoe or manager@serv.com"
+                    placeholder="Enter your username"
                     className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-sm font-black text-slate-900 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all shadow-sm"
                     required
                     autoComplete="username"

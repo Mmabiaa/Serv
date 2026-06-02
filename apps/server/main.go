@@ -67,6 +67,7 @@ func main() {
 
 	fmt.Println("5. Running migrations")
 	database.AutoMigrate()
+	database.SeedData()
 
 	fmt.Println("6. Initializing Redis")
 	database.InitRedis()

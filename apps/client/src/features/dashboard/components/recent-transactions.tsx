@@ -47,29 +47,28 @@ export function RecentTx({ transactions }: RecentTxProps) {
               {transactions.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-8 py-5">
-                    <p className="text-sm font-black text-slate-900">{t.id}</p>
+                    <p className="text-sm font-black text-slate-900">{t.receiptNumber}</p>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-                      {t.time} · {t.items} items
+                      {new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {t.items?.length || 0} items
                     </p>
                   </td>
                   <td className="px-4 py-5">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-slate-100 text-[10px] font-black grid place-items-center text-slate-600">
-                        {t.staffName
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+                        {t.customerName
+                          ? t.customerName.split(" ").map((n) => n[0]).join("")
+                          : "WC"}
                       </div>
-                      <p className="text-xs font-bold text-slate-700">{t.staffName}</p>
+                      <p className="text-xs font-bold text-slate-700">{t.customerName || "Walk-in"}</p>
                     </div>
                   </td>
                   <td className="px-4 py-5">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                      {t.method}
+                      {t.paymentMethod}
                     </span>
                   </td>
                   <td className="px-8 py-5 text-right">
-                    <p className="text-sm font-black text-primary font-mono">{fmt(t.total)}</p>
+                    <p className="text-sm font-black text-primary font-mono">{fmt(t.totalAmount)}</p>
                     <div className="flex items-center justify-end gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">
                         Verified
