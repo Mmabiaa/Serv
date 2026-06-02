@@ -41,6 +41,120 @@ export function CheckoutSheet({
     null,
   );
   const total = cartTotal(cart);
+  const [lastTx, setLastTx] = useState<Transaction | null>(null);
+
+  const printReceipt = (data: Transaction) => {
+    const iframe = document.createElement("iframe");
+    iframe.style.display = "none";
+    document.body.appendChild(iframe);
+
+    const itemsHtml = (data.items || []).map(item => `
+      <tr>
+        <td style="padding: 4px 0;">
+          <div style="font-weight: bold;">${item.product_name}</div>
+          <div style="font-size: 10px; color: #666;">${item.quantity} x ${fmt(item.unit_price)}</div>
+        </td>
+        <td style="text-align: right; vertical-align: top; padding: 4px 0;">
+          ${fmt(item.total_price)}
+        </td>
+      </tr>
+    `).join("");
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+
+    doc.write(`
+      <html>
+        <head>
+          <title>Receipt - ${data.receipt_number}</title>
+          <style>
+            @page { size: 80mm auto; margin: 0; }
+            body { 
+              font-family: 'Courier New', Courier, monospace; 
+              width: 72mm; 
+              margin: 0 auto; 
+              padding: 10mm 2mm;
+              font-size: 12px;
+              line-height: 1.2;
+              color: #000;
+            }
+            .center { text-align: center; }
+            .bold { font-weight: bold; }
+            .large { font-size: 16px; }
+            .hr { border-bottom: 1px dashed #000; margin: 8px 0; }
+            table { width: 100%; border-collapse: collapse; }
+            .total-row { font-size: 14px; font-weight: bold; }
+            .footer { margin-top: 20px; font-size: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="center">
+            <div class="large bold">SERV POS</div>
+            <div>Professional Retail System</div>
+            <div style="margin-top: 4px;">Kigali, Rwanda</div>
+            <div>Tel: +250 788 000 000</div>
+          </div>
+
+          <div class="hr"></div>
+          
+          <div style="margin-bottom: 8px;">
+            <div>RECEIPT: ${data.receipt_number}</div>
+            <div>DATE: ${new Date(data.created_at).toLocaleString()}</div>
+            <div>CASHIER: ${user?.name || "System"}</div>
+            ${data.customer_name ? `<div>CUSTOMER: ${data.customer_name}</div>` : ""}
+          </div>
+
+          <div class="hr"></div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align: left;">ITEM</th>
+                <th style="text-align: right;">TOTAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+
+          <div class="hr"></div>
+
+          <table>
+            <tr>
+              <td>SUBTOTAL</td>
+              <td style="text-align: right;">${fmt(data.sub_total)}</td>
+            </tr>
+            <tr>
+              <td>TAX (18%)</td>
+              <td style="text-align: right;">${fmt(data.tax_amount)}</td>
+            </tr>
+            <tr class="total-row">
+              <td style="padding-top: 8px;">TOTAL</td>
+              <td style="text-align: right; padding-top: 8px;">${fmt(data.total_amount)}</td>
+            </tr>
+          </table>
+
+          <div class="hr"></div>
+          
+          <div class="center">
+            <div class="bold">PAYMENT: ${data.payment_method?.toUpperCase() || "CASH"}</div>
+            <div style="margin-top: 8px;">THANK YOU FOR YOUR VISIT</div>
+            <div class="footer">Powerered by Serv SaaS</div>
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }, 500);
+  };
 
   useEffect(() => {
     if (open) {
@@ -105,10 +219,14 @@ export function CheckoutSheet({
         total_discount: 0
       });
 
-      setReceipt({ id: res.receiptNumber, customer: res.customerName || "Walk-in customer" });
+      setReceipt({ id: res.receipt_number, customer: res.customer_name || "Walk-in customer" });
+      setLastTx(res);
       setDone(true);
       toast.success("Transaction Complete");
       setTimeout(() => cartStore.clear(), 200);
+
+      // Professional practice: Auto-trigger print for successful sales
+      printReceipt(res);
     } catch (err: any) {
       toast.error(err.message || "Checkout failed");
     } finally {
@@ -126,13 +244,29 @@ export function CheckoutSheet({
         onClick={(e) => e.stopPropagation()}
       >
         {done && receipt ? (
-          <ReceiptView
-            total={total}
-            method={method}
-            txId={receipt.id}
-            customer={receipt.customer}
-            onClose={reset}
-          />
+          <div className="flex flex-col h-full items-center justify-center p-8 space-y-6 animate-in zoom-in-95 duration-300 text-center">
+            <div className="w-24 h-24 rounded-full bg-success/10 text-success grid place-items-center mb-4">
+              <Check className="w-12 h-12" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-black text-slate-900">Success!</h2>
+              <p className="text-slate-500 mt-2">Transaction <span className="font-mono font-bold text-slate-900">#${receipt.id}</span> completed.</p>
+            </div>
+            <div className="flex flex-col w-full gap-3 max-w-[280px]">
+              <button
+                onClick={() => lastTx && printReceipt(lastTx)}
+                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-xl shadow-slate-900/10 active:scale-95"
+              >
+                <Printer className="w-4 h-4" /> Print Receipt
+              </button>
+              <button
+                onClick={reset}
+                className="w-full bg-white border border-slate-200 text-slate-600 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all active:scale-95"
+              >
+                New Transaction
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col h-full max-h-[90vh]">
             {/* Header */}

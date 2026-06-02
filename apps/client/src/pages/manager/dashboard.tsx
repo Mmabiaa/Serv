@@ -41,7 +41,7 @@ export function DashboardPage() {
 
   const low = (products || []).filter((p) => p.quantity < 10);
   const max = Math.max(0, ...weeklySales.map((w) => w.value));
-  const todayRevenue = (transactions || []).reduce((s, t) => s + (t.totalAmount || 0), 0);
+  const todayRevenue = (transactions || []).reduce((s, t) => s + (t.total_amount || 0), 0);
   const todayOrders = (transactions || []).length;
 
   return (

@@ -5,7 +5,7 @@ import { useTransactions, fetchTransactions } from "@/store/pos-store";
 import { cn } from "@/lib/utils";
 
 export function SalesHistoryPage() {
-  const transactions = useTransactions();
+  const transactions = useTransactions() || [];
 
   useEffect(() => {
     fetchTransactions();
@@ -13,9 +13,9 @@ export function SalesHistoryPage() {
 
   const [q, setQ] = useState("");
   
-  const filtered = transactions.filter(t => 
-    t.receiptNumber.toLowerCase().includes(q.toLowerCase()) || 
-    t.customerName?.toLowerCase().includes(q.toLowerCase())
+  const filtered = (transactions || []).filter(t => 
+    (t.receipt_number || "").toLowerCase().includes(q.toLowerCase()) || 
+    (t.customer_name || "").toLowerCase().includes(q.toLowerCase())
   );
 
   return (
@@ -63,22 +63,22 @@ export function SalesHistoryPage() {
               {filtered.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50 transition-colors group">
                   <td className="px-8 py-6">
-                    <p className="text-sm font-black text-slate-900">{t.receiptNumber}</p>
+                    <p className="text-sm font-black text-slate-900">{t.receipt_number}</p>
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">
-                      {new Date(t.createdAt).toLocaleTimeString()} · {t.items?.length || 0} items
+                      {new Date(t.created_at).toLocaleTimeString()} · {t.items?.length || 0} items
                     </p>
                   </td>
                   <td className="px-4 py-6">
-                    <p className="text-sm font-bold text-slate-700">{t.customerName || "Walk-in"}</p>
-                    <p className="text-[10px] text-slate-400">{t.customerPhone}</p>
+                    <p className="text-sm font-bold text-slate-700">{t.customer_name || "Walk-in"}</p>
+                    <p className="text-[10px] text-slate-400">{t.customer_phone}</p>
                   </td>
                   <td className="px-4 py-6">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
-                      {t.paymentMethod}
+                      {t.payment_method}
                     </span>
                   </td>
                   <td className="px-8 py-6 text-right">
-                    <p className="text-sm font-black text-primary font-mono">{fmt(t.totalAmount)}</p>
+                    <p className="text-sm font-black text-primary font-mono">{fmt(t.total_amount)}</p>
                   </td>
                   <td className="px-4 py-6 text-right">
                     <button className="w-8 h-8 rounded-lg hover:bg-slate-100 grid place-items-center text-slate-400">

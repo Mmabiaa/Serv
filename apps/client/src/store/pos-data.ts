@@ -20,8 +20,10 @@ export type Category = {
 
 export const CURRENCY = "RWF";
 
-export const fmt = (n: number) =>
-  `${CURRENCY} ${n.toLocaleString("en-US")}`;
+export const fmt = (n: number | undefined | null) => {
+  const val = n || 0;
+  return `${CURRENCY} ${val.toLocaleString("en-US")}`;
+};
 
 // Mock data removed as per user request.
 // All data will be fetched from the server.

@@ -29,15 +29,15 @@ export type Customer = {
 
 export type Transaction = {
   id: string;
-  receiptNumber: string;
-  customerName: string;
-  customerPhone: string;
-  totalAmount: number;
-  subTotal: number;
-  taxAmount: number;
-  paymentMethod: string;
+  receipt_number: string;
+  customer_name: string;
+  customer_phone: string;
+  total_amount: number;
+  sub_total: number;
+  tax_amount: number;
+  payment_method: string;
   status: string;
-  createdAt: string;
+  created_at: string;
   items: any[];
 };
 
@@ -101,6 +101,14 @@ interface PosState {
   checkout: (data: any) => Promise<Transaction>;
 }
 
+export type UserResponse = {
+  id: string;
+  full_name: string;
+  username: string;
+  role: string;
+  is_active: boolean;
+};
+
 export const usePosStore = create<PosState>()(
   persist(
     (set, get) => ({
@@ -137,13 +145,24 @@ export const usePosStore = create<PosState>()(
       fetchStaff: async () => {
         set({ isLoading: true });
         try {
-          const staff = await api.get<StaffMember[]>("/users/staff");
-          const processedStaff = (staff || []).map(s => ({
-            ...s,
-            initials: s.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+          // Senior approach: Always ensure correct data mapping from backend response
+          const response = await api.get<UserResponse[]>("/users/staff?limit=100");
+          const processedStaff = (response || []).map(s => ({
+            id: s.id,
+            fullName: s.full_name,
+            username: s.username,
+            role: s.role as any,
+            isActive: s.is_active,
+            initials: (s.full_name || s.username || "??")
+              .split(" ")
+              .map(n => n[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase()
           }));
           set({ staff: processedStaff, isLoading: false });
         } catch (err: any) {
+          console.error("Staff fetch error:", err);
           set({ error: err.message, isLoading: false });
         }
       },
