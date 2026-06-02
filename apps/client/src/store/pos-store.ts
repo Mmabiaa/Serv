@@ -15,6 +15,8 @@ export type StaffMember = {
   role: "admin" | "manager" | "cashier";
   isActive: boolean;
   initials: string;
+  sales_today?: number;
+  revenue_today?: number;
 };
 
 export type Customer = {

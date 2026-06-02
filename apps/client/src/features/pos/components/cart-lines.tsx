@@ -1,5 +1,5 @@
 import { Trash2, Minus, Plus } from "lucide-react";
-import { cartStore, useCart, fmt, cartCount, cartTotal } from "@/store/cart-store";
+import { cartStore, useCart, cartCount, cartTotal } from "@/store/cart-store";
 
 export function CartLines() {
   const cart = useCart();

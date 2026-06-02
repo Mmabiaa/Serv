@@ -5,7 +5,6 @@ import { useStaff, type StaffMember, fetchStaff } from "@/store/pos-store";
 import { ManagerOnly } from "@/features/layout/components/app-shell";
 import { StaffDialog } from "@/features/staff/components/staff-dialog";
 import { StaffView } from "@/features/staff/components/staff-view";
-import { StaffCard } from "@/features/staff/components/staff-card";
 
 type DialogMode =
   | { type: "view"; member: StaffMember }
@@ -29,7 +28,7 @@ export function StaffPage() {
           <div>
             <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Staff</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {(staff || []).filter((s) => s.isActive).length} active · {(staff || []).length} total
+              {staff.filter((s) => s.isActive).length} active · {staff.length} total
             </p>
           </div>
           <button
@@ -42,7 +41,7 @@ export function StaffPage() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-          {(staff || []).map((s) => (
+          {staff.map((s) => (
             <div key={s.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -52,12 +51,12 @@ export function StaffPage() {
                   <span
                     className={
                       "absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-card " +
-                      (s.online ? "bg-success" : "bg-muted-foreground/40")
+                      (s.isActive ? "bg-success" : "bg-muted-foreground/40")
                     }
                   />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold truncate">{s.name}</p>
+                  <p className="text-sm font-bold truncate">{s.username}</p>
                   <p className="text-[11px] text-muted-foreground capitalize">{s.role}</p>
                 </div>
               </div>
@@ -66,13 +65,13 @@ export function StaffPage() {
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                     Today's sales
                   </p>
-                  <p className="text-sm font-bold font-mono mt-0.5">{s.sales}</p>
+                  <p className="text-sm font-bold font-mono mt-0.5">{s.sales_today || 0}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                     Revenue
                   </p>
-                  <p className="text-sm font-bold font-mono mt-0.5">{fmt(s.revenue)}</p>
+                  <p className="text-sm font-bold font-mono mt-0.5">{fmt(s.revenue_today || 0)}</p>
                 </div>
               </div>
               <div className="mt-4 pt-4 border-t border-border flex gap-2">

@@ -114,7 +114,7 @@ export function DashboardPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-black text-slate-900 truncate">{p.name}</p>
                       <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                        {p.category}
+                        {p.category_name}
                       </p>
                     </div>
                   </li>
