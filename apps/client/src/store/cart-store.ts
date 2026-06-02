@@ -60,13 +60,13 @@ export const cartStore = {
 };
 
 export function useCart() {
-  return useCartStore((state) => state.items);
+  return useCartStore((state) => state.items || []);
 }
 
 export function cartTotal(lines: CartLine[]) {
-  return lines.reduce((s, l) => s + l.product.price * l.qty, 0);
+  return (lines || []).reduce((s, l) => s + (l.product?.price || 0) * l.qty, 0);
 }
 
 export function cartCount(lines: CartLine[]) {
-  return lines.reduce((s, l) => s + l.qty, 0);
+  return (lines || []).reduce((s, l) => s + l.qty, 0);
 }

@@ -14,8 +14,8 @@ import { ProductCard } from "@/features/pos/components/product-card";
 import { ProductRow } from "@/features/pos/components/product-row";
 
 export function PosTerminalPage() {
-  const cart = useCart();
-  const products = useProducts();
+  const cart = useCart() || [];
+  const products = useProducts() || [];
 
   useEffect(() => {
     fetchProducts();
@@ -28,7 +28,7 @@ export function PosTerminalPage() {
 
   const filtered = useMemo(
     () =>
-      products.filter(
+      (products || []).filter(
         (p) =>
           (cat === "All Inventory" || p.category_name === cat) &&
           (q === "" ||

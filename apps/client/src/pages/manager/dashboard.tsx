@@ -20,10 +20,10 @@ import { RecentTx } from "@/features/dashboard/components/recent-transactions";
 import { ManagerOnly } from "@/features/layout/components/app-shell";
 
 export function DashboardPage() {
-  const products = useProducts();
-  const staff = useStaff();
-  const transactions = useTransactions();
-  const reports = useDailyReports();
+  const products = useProducts() || [];
+  const staff = useStaff() || [];
+  const transactions = useTransactions() || [];
+  const reports = useDailyReports() || [];
 
   useEffect(() => {
     fetchProducts();
@@ -33,16 +33,16 @@ export function DashboardPage() {
   }, []);
 
   const weeklySales = useMemo(() => {
-    return reports.slice(0, 7).reverse().map(r => ({
+    return (reports || []).slice(0, 7).reverse().map(r => ({
       day: new Date(r.date).toLocaleDateString('en-US', { weekday: 'short' }),
       value: r.total_sales
     }));
   }, [reports]);
 
-  const low = products.filter((p) => p.quantity < 10);
-  const max = Math.max(...weeklySales.map((w) => w.value));
-  const todayRevenue = transactions.reduce((s, t) => s + t.totalAmount, 0);
-  const todayOrders = transactions.length;
+  const low = (products || []).filter((p) => p.quantity < 10);
+  const max = Math.max(0, ...weeklySales.map((w) => w.value));
+  const todayRevenue = (transactions || []).reduce((s, t) => s + (t.totalAmount || 0), 0);
+  const todayOrders = (transactions || []).length;
 
   return (
     <ManagerOnly>

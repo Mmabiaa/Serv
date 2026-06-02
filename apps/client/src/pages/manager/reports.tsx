@@ -4,13 +4,13 @@ import { ArrowUpRight } from "lucide-react";
 import { ManagerOnly } from "@/features/layout/components/app-shell";
 
 export function ReportsPage() {
-  const products = useProducts();
-  const max = Math.max(...weeklySales.map((w) => w.value));
-  const total = weeklySales.reduce((s, w) => s + w.value, 0);
+  const products = useProducts() || [];
+  const max = Math.max(0, ...(weeklySales || []).map((w) => w.value));
+  const total = (weeklySales || []).reduce((s, w) => s + w.value, 0);
 
-  const top = [...products]
+  const top = [...(products || [])]
     .slice(0, 5)
-    .map((p, i) => ({ ...p, sold: 50 - i * 7, revenue: p.price * (50 - i * 7) }));
+    .map((p, i) => ({ ...p, sold: 50 - i * 7, revenue: (p.price || 0) * (50 - i * 7) }));
 
   return (
     <ManagerOnly>

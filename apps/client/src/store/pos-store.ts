@@ -99,7 +99,7 @@ export const usePosStore = create<PosState>()(
         set({ isLoading: true, error: null });
         try {
           const products = await api.get<Product[]>("/inventory/products?limit=100");
-          set({ products, isLoading: false });
+          set({ products: products || [], isLoading: false });
         } catch (err: any) {
           set({ error: err.message, isLoading: false });
         }
@@ -108,7 +108,7 @@ export const usePosStore = create<PosState>()(
       fetchCategories: async () => {
         try {
           const categories = await api.get<Category[]>("/inventory/categories");
-          set({ categories });
+          set({ categories: categories || [] });
         } catch (err: any) {
           console.error("Failed to fetch categories:", err);
         }
@@ -118,7 +118,7 @@ export const usePosStore = create<PosState>()(
         set({ isLoading: true });
         try {
           const staff = await api.get<StaffMember[]>("/users/staff");
-          const processedStaff = staff.map(s => ({
+          const processedStaff = (staff || []).map(s => ({
             ...s,
             initials: s.fullName.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
           }));
@@ -131,7 +131,7 @@ export const usePosStore = create<PosState>()(
       fetchCustomers: async () => {
         try {
           const customers = await api.get<Customer[]>("/customers");
-          set({ customers });
+          set({ customers: customers || [] });
         } catch (err: any) {
           console.error("Failed to fetch customers:", err);
         }
@@ -141,7 +141,7 @@ export const usePosStore = create<PosState>()(
         set({ isLoading: true });
         try {
           const transactions = await api.get<Transaction[]>("/sales/history");
-          set({ transactions, isLoading: false });
+          set({ transactions: transactions || [], isLoading: false });
         } catch (err: any) {
           set({ error: err.message, isLoading: false });
         }
@@ -153,7 +153,10 @@ export const usePosStore = create<PosState>()(
             api.get<DailyReport[]>("/reports/daily"),
             api.get<StaffPerformance[]>("/reports/staff-performance")
           ]);
-          set({ dailyReports: daily, staffPerformance: performance });
+          set({ 
+            dailyReports: daily || [], 
+            staffPerformance: performance || [] 
+          });
         } catch (err: any) {
           console.error("Failed to fetch reports:", err);
         }

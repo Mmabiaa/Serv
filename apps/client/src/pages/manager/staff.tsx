@@ -14,7 +14,7 @@ type DialogMode =
   | null;
 
 export function StaffPage() {
-  const staff = useStaff();
+  const staff = useStaff() || [];
 
   useEffect(() => {
     fetchStaff();
@@ -29,7 +29,7 @@ export function StaffPage() {
           <div>
             <h1 className="text-2xl lg:text-3xl font-extrabold tracking-tight">Staff</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {staff.filter((s) => s.isActive).length} active · {staff.length} total
+              {(staff || []).filter((s) => s.isActive).length} active · {(staff || []).length} total
             </p>
           </div>
           <button
@@ -42,7 +42,7 @@ export function StaffPage() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-          {staff.map((s) => (
+          {(staff || []).map((s) => (
             <div key={s.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="relative">

@@ -10,7 +10,7 @@ import type { Product } from "@/store/pos-data";
 type Mode = "list" | "cards";
 
 export function InventoryPage() {
-  const products = useProducts();
+  const products = useProducts() || [];
 
   useEffect(() => {
     fetchProducts();
@@ -21,7 +21,7 @@ export function InventoryPage() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
 
-  const list = products.filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
+  const list = (products || []).filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <ManagerOnly>
