@@ -21,10 +21,10 @@ export type StaffMember = {
 
 export type Customer = {
   id: string;
-  fullName: string;
-  phoneNumber: string;
-  totalOrders: number;
-  totalSpent: number;
+  full_name: string;
+  phone_number: string;
+  total_orders: number;
+  total_spent: number;
 };
 
 export type Transaction = {
@@ -67,6 +67,18 @@ export type Movement = {
   created_at: string;
 };
 
+export type AuditLog = {
+  id: string;
+  user_id: string;
+  action: string;
+  entity: string;
+  entity_id: string;
+  details: string;
+  ip_address: string;
+  created_at: string;
+  user_name?: string;
+};
+
 interface PosState {
   products: Product[];
   categories: Category[];
@@ -76,6 +88,7 @@ interface PosState {
   dailyReports: DailyReport[];
   staffPerformance: StaffPerformance[];
   movements: Movement[];
+  auditLogs: AuditLog[];
   isLoading: boolean;
   error: string | null;
   
@@ -87,6 +100,7 @@ interface PosState {
   fetchTransactions: () => Promise<void>;
   fetchReports: () => Promise<void>;
   fetchMovements: () => Promise<void>;
+  fetchAuditLogs: () => Promise<void>;
 
   addCategory: (name: string) => Promise<Category>;
   addProduct: (p: any) => Promise<void>;
@@ -120,6 +134,7 @@ export const usePosStore = create<PosState>()(
       dailyReports: [],
       staffPerformance: [],
       movements: [],
+      auditLogs: [],
       isLoading: false,
       error: null,
 
@@ -169,7 +184,7 @@ export const usePosStore = create<PosState>()(
 
       fetchCustomers: async () => {
         try {
-          const customers = await api.get<Customer[]>("/customers");
+          const customers = await api.get<Customer[]>("/customers?limit=100");
           set({ customers: customers || [] });
         } catch (err: any) {
           console.error("Failed to fetch customers:", err);
@@ -206,6 +221,16 @@ export const usePosStore = create<PosState>()(
         try {
           const movements = await api.get<Movement[]>("/inventory/movements?limit=100");
           set({ movements: movements || [], isLoading: false });
+        } catch (err: any) {
+          set({ error: err.message, isLoading: false });
+        }
+      },
+
+      fetchAuditLogs: async () => {
+        set({ isLoading: true });
+        try {
+          const logs = await api.get<AuditLog[]>("/users/activity");
+          set({ auditLogs: logs || [], isLoading: false });
         } catch (err: any) {
           set({ error: err.message, isLoading: false });
         }
@@ -319,6 +344,10 @@ export const usePosStore = create<PosState>()(
             transactions: [res, ...state.transactions],
             isLoading: false
           }));
+          // Refetch products to update stock immediately
+          await get().fetchProducts();
+          // Refetch reports to update dashboard
+          await get().fetchReports();
           return res;
         } catch (err: any) {
           set({ error: err.message, isLoading: false });
@@ -368,6 +397,17 @@ export const useMovements = () => {
   }, [movements, products, staff]);
 };
 
+export const useAuditLogs = () => {
+  const logs = usePosStore((state) => state.auditLogs);
+  const staff = usePosStore((state) => state.staff);
+  return useMemo(() => {
+    return (logs || []).map(l => ({
+      ...l,
+      user_name: staff.find(s => s.id === l.user_id)?.fullName || "System/Unknown"
+    }));
+  }, [logs, staff]);
+};
+
 export const usePosLoading = () => usePosStore((state) => state.isLoading);
 export const usePosError = () => usePosStore((state) => state.error);
 
@@ -389,4 +429,5 @@ export const fetchCustomers = () => usePosStore.getState().fetchCustomers();
 export const fetchTransactions = () => usePosStore.getState().fetchTransactions();
 export const fetchReports = () => usePosStore.getState().fetchReports();
 export const fetchMovements = () => usePosStore.getState().fetchMovements();
+export const fetchAuditLogs = () => usePosStore.getState().fetchAuditLogs();
 export const checkout = (data: any) => usePosStore.getState().checkout(data);

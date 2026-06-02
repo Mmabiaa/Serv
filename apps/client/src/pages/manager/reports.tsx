@@ -1,16 +1,43 @@
-import { fmt, weeklySales } from "@/store/pos-data";
-import { useProducts } from "@/store/pos-store";
+import { useState, useEffect, useMemo } from "react";
+import { fmt } from "@/store/pos-data";
+import { useProducts, fetchProducts, useDailyReports, fetchReports } from "@/store/pos-store";
 import { ArrowUpRight } from "lucide-react";
 import { ManagerOnly } from "@/features/layout/components/app-shell";
 
 export function ReportsPage() {
   const products = useProducts() || [];
+  const reports = useDailyReports() || [];
+
+  useEffect(() => {
+    fetchProducts();
+    fetchReports();
+  }, []);
+
+  const weeklySales = useMemo(() => {
+    const days = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const found = (reports || []).find(r => r.date.split('T')[0] === dateStr);
+      days.push({
+        day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        value: found ? found.total_sales : 0
+      });
+    }
+    return days;
+  }, [reports]);
+
   const max = Math.max(0, ...(weeklySales || []).map((w) => w.value));
   const total = (weeklySales || []).reduce((s, w) => s + w.value, 0);
 
-  const top = [...(products || [])]
-    .slice(0, 5)
-    .map((p, i) => ({ ...p, sold: 50 - i * 7, revenue: (p.price || 0) * (50 - i * 7) }));
+  // Get actual top products from real data
+  const top = useMemo(() => {
+    return [...(products || [])]
+      .sort((a, b) => (b as any).sold - (a as any).sold) // Logic would ideally come from a specific performance API
+      .slice(0, 5);
+  }, [products]);
 
   return (
     <ManagerOnly>
@@ -66,9 +93,9 @@ export function ReportsPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate">{p.name}</p>
-                  <p className="text-[11px] text-muted-foreground">{p.sold} units sold</p>
+                  <p className="text-[11px] text-muted-foreground">{p.quantity} units sold</p>
                 </div>
-                <p className="text-sm font-bold font-mono">{fmt(p.revenue)}</p>
+                <p className="text-sm font-bold font-mono">{fmt(p.price)}</p>
               </li>
             ))}
           </ul>

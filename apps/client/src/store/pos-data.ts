@@ -18,11 +18,11 @@ export type Category = {
   description?: string;
 };
 
-export const CURRENCY = "RWF";
+export const CURRENCY = "GHS";
 
 export const fmt = (n: number | undefined | null) => {
   const val = n || 0;
-  return `${CURRENCY} ${val.toLocaleString("en-US")}`;
+  return `GH₵ ${val.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 // Mock data removed as per user request.

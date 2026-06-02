@@ -7,6 +7,7 @@ import { useAuth } from "@/store/auth-store";
 import {
   checkout,
   useStaff,
+  type Transaction,
 } from "@/store/pos-store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";

@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { fmt } from "@/store/pos-data";
-import { useCustomers } from "@/store/pos-store";
+import { useCustomers, fetchCustomers } from "@/store/pos-store";
 import { ManagerOnly } from "@/features/layout/components/app-shell";
 
 export function CustomersPage() {
-  const customers = useCustomers();
+  const customers = useCustomers() || [];
+  
+  useEffect(() => {
+    fetchCustomers();
+  }, []);
+
   const [q, setQ] = useState("");
   const list = customers.filter((c) =>
-    (c.name + c.phone).toLowerCase().includes(q.toLowerCase()),
+    (c.full_name + c.phone_number).toLowerCase().includes(q.toLowerCase()),
   );
 
   return (
@@ -44,29 +49,29 @@ export function CustomersPage() {
               {list.map((c) => (
                 <li key={c.id} className="p-4 lg:p-5 flex items-center gap-4">
                   <div className="w-11 h-11 rounded-full bg-primary/10 text-primary grid place-items-center text-sm font-bold">
-                    {c.name
+                    {(c.full_name || "??")
                       .split(" ")
                       .map((p) => p[0])
                       .join("")
                       .slice(0, 2)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate">{c.name}</p>
+                    <p className="text-sm font-bold truncate">{c.full_name}</p>
                     <p className="text-[11px] text-muted-foreground font-mono">
-                      {c.phone || "No phone on file"}
+                      {c.phone_number || "No phone on file"}
                     </p>
                   </div>
                   <div className="text-right hidden sm:block">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                       Visits
                     </p>
-                    <p className="text-sm font-bold font-mono">{c.visits}</p>
+                    <p className="text-sm font-bold font-mono">{c.total_orders}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                       Spent
                     </p>
-                    <p className="text-sm font-bold font-mono">{fmt(c.spent)}</p>
+                    <p className="text-sm font-bold font-mono">{fmt(c.total_spent)}</p>
                   </div>
                 </li>
               ))}

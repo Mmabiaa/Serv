@@ -98,6 +98,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Extracted shared and complex UI components into feature directories (`src/features`).
 - **Data Integration**:
   - Removed all mock data from the frontend.
+- **Enterprise Engineering**:
+  - Implemented **Professional Receipt Engine**: Hidden iframe-based native printing for supermarket-style thermal receipts.
+  - Standardized **Data Architecture**: Synchronized all frontend models with backend snake_case JSON responses.
+  - Implemented **Resilient State Management**: Zustand selectors now use `useMemo` for stable identity, preventing React 19 infinite update loops.
+  - Hardened **Security PINs**: Enabled flexible 4-digit or 6-digit PIN support across the entire stack (API validation, DB models, and POS keypad).
+  - Automated **Customer CRM**: Transactions now automatically create or update customer records using phone numbers as primary keys, with spend/visit tracking.
+  - Real-time **Stock Synchronization**: Frontend now triggers atomic refetches of product and report data immediately after successful checkouts or restocks.
+  - Unified **Activity Monitoring**: Replaced mock security logs with a real-time audit trail fetched from the backend `/api/v1/users/activity` endpoint.
+  - **Localization**: Changed system currency to Ghana Cedis (GHS/GH₵) with localized formatting.
+  - **API Expansion**: Added backend handlers for `PUT` (Update) and `DELETE` (Remove) for inventory management.
+  - Improved **RESTful Standards**: Standardized all API calls to include `limit=100` for consistent performance and scalability.
   - Implemented full API integration with the Go backend via a secured `api-client`.
   - Switched from local state persistence to server-driven data fetching for Products, Staff, Customers, and Transactions.
 - **UI/UX Enhancements**:

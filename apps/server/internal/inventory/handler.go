@@ -413,10 +413,10 @@ type MovementResponse struct {
 	CreatedAt      time.Time `json:"created_at"`
 }
 
-type StockAdjustmentRequest struct {
+type AdjustStockRequest struct {
 	ProductID uuid.UUID `json:"product_id" binding:"required"`
 	Quantity  float64   `json:"quantity" binding:"required"`
-	Type      string    `json:"type" binding:"required,oneof=IN OUT ADJUSTMENT"`
+	Type      string    `json:"type" binding:"required,oneof=IN OUT ADJUSTMENT RESTOCK"`
 	Reason    string    `json:"reason"`
 }
 
@@ -426,12 +426,12 @@ type StockAdjustmentRequest struct {
 // @Tags inventory
 // @Accept json
 // @Produce json
-// @Param request body StockAdjustmentRequest true "Adjustment details"
+// @Param request body AdjustStockRequest true "Adjustment details"
 // @Success 200 {object} MovementResponse
 // @Security BearerAuth
 // @Router /inventory/adjust [post]
 func AdjustStock(c *gin.Context) {
-	var req StockAdjustmentRequest
+	var req AdjustStockRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
@@ -451,7 +451,7 @@ func AdjustStock(c *gin.Context) {
 
 		prevQty := product.Quantity
 		var newQty float64
-		if req.Type == "IN" {
+		if req.Type == "IN" || req.Type == "RESTOCK" {
 			newQty = prevQty + req.Quantity
 		} else if req.Type == "OUT" || req.Type == "ADJUSTMENT" {
 			// For ADJUSTMENT, req.Quantity can be negative

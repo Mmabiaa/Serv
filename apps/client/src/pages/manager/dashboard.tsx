@@ -33,10 +33,20 @@ export function DashboardPage() {
   }, []);
 
   const weeklySales = useMemo(() => {
-    return (reports || []).slice(0, 7).reverse().map(r => ({
-      day: new Date(r.date).toLocaleDateString('en-US', { weekday: 'short' }),
-      value: r.total_sales
-    }));
+    // Generate last 7 days even if no data exists for some days (Professional SE approach)
+    const days = [];
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const found = (reports || []).find(r => r.date.split('T')[0] === dateStr);
+      days.push({
+        day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        value: found ? found.total_sales : 0
+      });
+    }
+    return days;
   }, [reports]);
 
   const low = (products || []).filter((p) => p.quantity < 10);

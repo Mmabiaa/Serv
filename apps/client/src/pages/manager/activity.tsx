@@ -1,18 +1,31 @@
-import { useState } from "react";
-import { Search, ShieldAlert, LogIn, ShoppingCart, UserPlus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, ShieldAlert, LogIn, ShoppingCart, UserPlus, Package, Trash2, Edit, CheckCircle } from "lucide-react";
 import { ManagerOnly } from "@/features/layout/components/app-shell";
+import { useAuditLogs, fetchAuditLogs, fetchStaff } from "@/store/pos-store";
 import { cn } from "@/lib/utils";
+
+const getIcon = (action: string) => {
+  if (action.includes("LOGIN")) return { icon: LogIn, color: "text-blue-500", bg: "bg-blue-50" };
+  if (action.includes("SALE") || action.includes("CHECKOUT")) return { icon: ShoppingCart, color: "text-emerald-500", bg: "bg-emerald-50" };
+  if (action.includes("CREATE_STAFF")) return { icon: UserPlus, color: "text-violet-500", bg: "bg-violet-50" };
+  if (action.includes("DELETE")) return { icon: Trash2, color: "text-rose-500", bg: "bg-rose-50" };
+  if (action.includes("UPDATE")) return { icon: Edit, color: "text-amber-500", bg: "bg-amber-50" };
+  if (action.includes("PRODUCT")) return { icon: Package, color: "text-slate-500", bg: "bg-slate-50" };
+  return { icon: CheckCircle, color: "text-slate-500", bg: "bg-slate-50" };
+};
 
 export function ActivityPage() {
   const [q, setQ] = useState("");
+  const logs = useAuditLogs() || [];
+
+  useEffect(() => {
+    fetchAuditLogs();
+    fetchStaff();
+  }, []);
   
-  // Mock activity logs
-  const logs = [
-    { id: 1, user: "John D.", action: "Logged in", time: "14:00", details: "IP: 192.168.1.1", icon: LogIn, color: "text-blue-500", bg: "bg-blue-50" },
-    { id: 2, user: "Marie K.", action: "New Sale", time: "14:15", details: "Sale #REC-982 for 12,000 RWF", icon: ShoppingCart, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { id: 3, user: "Admin", action: "Updated Staff", time: "13:30", details: "Changed role for Eric M.", icon: UserPlus, color: "text-violet-500", bg: "bg-violet-50" },
-    { id: 4, user: "Eric M.", action: "Void Request", time: "12:45", details: "Requesting void for Sale #REC-970", icon: ShieldAlert, color: "text-rose-500", bg: "bg-rose-50" },
-  ];
+  const filtered = logs.filter((log) =>
+    (log.user_name + log.action + log.details).toLowerCase().includes(q.toLowerCase())
+  );
 
   return (
     <ManagerOnly>
@@ -38,27 +51,41 @@ export function ActivityPage() {
         </div>
 
         <div className="space-y-4">
-          {logs.map((log) => (
-            <div key={log.id} className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm flex items-center justify-between gap-6 hover:shadow-md transition-shadow group">
-              <div className="flex items-center gap-6">
-                <div className={cn("w-14 h-14 rounded-2xl grid place-items-center shrink-0 transition-transform group-hover:rotate-6", log.bg, log.color)}>
-                  <log.icon className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-black text-slate-900">{log.user}</p>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">•</span>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{log.action}</p>
-                  </div>
-                  <p className="text-sm text-slate-500 mt-1 font-medium">{log.details}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-black text-slate-900 font-mono">{log.time}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Today</p>
-              </div>
+          {filtered.length === 0 ? (
+            <div className="p-12 text-center text-slate-400 font-bold bg-white border border-slate-100 rounded-[2rem]">
+              No activity logs found.
             </div>
-          ))}
+          ) : (
+            filtered.map((log) => {
+              const style = getIcon(log.action);
+              return (
+                <div key={log.id} className="bg-white border border-slate-100 p-6 rounded-[2rem] shadow-sm flex items-center justify-between gap-6 hover:shadow-md transition-shadow group">
+                  <div className="flex items-center gap-6">
+                    <div className={cn("w-14 h-14 rounded-2xl grid place-items-center shrink-0 transition-transform group-hover:rotate-6", style.bg, style.color)}>
+                      <style.icon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-black text-slate-900">{log.user_name}</p>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">•</span>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{log.action}</p>
+                      </div>
+                      <p className="text-sm text-slate-500 mt-1 font-medium">{log.details || `Performed ${log.action} on ${log.entity}`}</p>
+                      <p className="text-[9px] text-slate-400 font-mono mt-1">IP: {log.ip_address}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-black text-slate-900 font-mono">
+                      {new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                      {new Date(log.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
     </ManagerOnly>
