@@ -14,6 +14,7 @@ type Organization struct {
 	PhoneNumber      string    `gorm:"not null"`
 	BusinessLocation string    `gorm:"not null"`
 	ManagerEmail     string    `gorm:"uniqueIndex;not null"`
+	ManagerPassword  string    `gorm:"default:''"` // Kept for DB compatibility, but not used in PIN flow
 	ManagerPIN       string    `gorm:"not null"`
 	CreatedAt        time.Time
 	UpdatedAt        time.Time

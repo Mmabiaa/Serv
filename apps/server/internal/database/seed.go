@@ -36,6 +36,7 @@ func SeedData() {
 			PhoneNumber:      "+250780000000",
 			BusinessLocation: "Kigali, Rwanda",
 			ManagerEmail:     email,
+			ManagerPassword:  "DUMMY_PASSWORD_FOR_DB_CONSTRAINT",
 			ManagerPIN:       string(hashedPIN),
 		}
 		if err := DB.Create(&org).Error; err != nil {

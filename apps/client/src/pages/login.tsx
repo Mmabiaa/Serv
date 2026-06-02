@@ -16,9 +16,9 @@ export function LoginPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || pin.length < 4) {
+    if (!username || pin.length < 6) {
       toast.error("Invalid input", {
-        description: "Please enter a valid username and 4-digit PIN.",
+        description: "Please enter a valid username and 6-digit PIN.",
       });
       return;
     }
@@ -102,10 +102,10 @@ export function LoginPage() {
                   <Lock className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" />
                   <input
                     value={pin}
-                    onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     type="password"
                     inputMode="numeric"
-                    placeholder="••••"
+                    placeholder={pin.length > 0 ? "••••••" : ""}
                     className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-2xl font-black text-slate-900 focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all font-mono tracking-[1em] shadow-sm"
                     required
                     autoComplete="current-password"

@@ -19,7 +19,7 @@ type RegisterRequest struct {
 	PhoneNumber      string `json:"phone_number" binding:"required"`
 	BusinessLocation string `json:"business_location" binding:"required"`
 	ManagerEmail     string `json:"manager_email" binding:"required,email"`
-	ManagerPIN       string `json:"manager_security_pin" binding:"required,len=4"`
+	ManagerPIN       string `json:"manager_security_pin" binding:"required,len=6"`
 }
 
 // RegisterOrganization godoc
@@ -98,7 +98,7 @@ func RegisterOrganization(c *gin.Context) {
 
 type LoginRequest struct {
 	Username string `json:"username" binding:"required"`
-	PIN      string `json:"pin" binding:"required,len=4"`
+	PIN      string `json:"pin" binding:"required,len=6"`
 	DeviceID string `json:"device_id"` // Optional device tracking
 }
 
@@ -373,7 +373,7 @@ type PasswordResetRequest struct {
 type PINResetVerifyRequest struct {
 	Email  string `json:"email" binding:"required,email"`
 	OTP    string `json:"otp" binding:"required,len=6"`
-	NewPIN string `json:"new_pin" binding:"required,len=4"`
+	NewPIN string `json:"new_pin" binding:"required,len=6"`
 }
 
 // RequestPINReset godoc
