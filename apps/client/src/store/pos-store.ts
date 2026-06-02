@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useShallow } from "zustand/react/shallow";
 import { api } from "@/lib/api-client";
 import {
   type Product,
@@ -260,13 +261,13 @@ export const usePosStore = create<PosState>()(
 );
 
 // Selectors for hooks
-export const useProducts = () => usePosStore((state) => {
+export const useProducts = () => usePosStore(useShallow((state) => {
   const { products, categories } = state;
   return products.map(p => ({
     ...p,
     category_name: categories.find(c => c.id === p.category_id)?.name || "Uncategorized"
   }));
-});
+}));
 export const useCategories = () => usePosStore((state) => state.categories);
 export const useCustomers = () => usePosStore((state) => state.customers);
 export const useStaff = () => usePosStore((state) => state.staff);
