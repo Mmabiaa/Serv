@@ -16,8 +16,12 @@ export function ProductRow({ product: p }: ProductRowProps) {
       onClick={() => cartStore.add(p)}
       className="w-full flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors text-left group"
     >
-      <div className="w-12 h-12 rounded-xl bg-muted grid place-items-center text-2xl shrink-0 group-hover:scale-110 transition-transform">
-        {p.emoji || "📦"}
+      <div className="w-12 h-12 rounded-xl bg-muted grid place-items-center text-2xl shrink-0 group-hover:scale-110 transition-transform overflow-hidden">
+        {p.imageUrl ? (
+          <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+        ) : (
+          p.emoji || "📦"
+        )}
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="text-sm font-bold truncate group-hover:text-primary transition-colors">

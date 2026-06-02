@@ -115,28 +115,39 @@ export function ProductDialog({ product, onClose }: ProductDialogProps) {
               </button>
             </div>
 
-            {imgSource === "file" ? (
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => upRef.current?.click()}
-                  disabled={loading}
-                  className="w-24 h-24 rounded-2xl bg-muted border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 overflow-hidden hover:border-primary transition-colors group disabled:opacity-50"
-                >
-                  {img ? (
-                    <img src={img} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <>
-                      <Upload className="w-5 h-5 text-muted-foreground group-hover:text-primary" />
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase">
-                        Photo
-                      </span>
-                    </>
-                  )}
-                </button>
-                <input ref={upRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={loading} />
-              </div>
-            ) : (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => imgSource === "file" && upRef.current?.click()}
+                disabled={loading}
+                className={cn(
+                  "w-32 h-32 rounded-3xl bg-muted border-2 border-dashed border-border flex flex-col items-center justify-center gap-2 overflow-hidden transition-all group disabled:opacity-50",
+                  imgSource === "file" && "hover:border-primary cursor-pointer",
+                  imgSource === "url" && "cursor-default border-solid"
+                )}
+              >
+                {img ? (
+                  <img src={img} alt="Preview" className="w-full h-full object-cover" onError={(e) => {
+                    (e.target as HTMLImageElement).src = ""; // Clear on error
+                    toast.error("Failed to load image preview");
+                  }} />
+                ) : (
+                  <>
+                    {imgSource === "file" ? (
+                      <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary" />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                    )}
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                      {imgSource === "file" ? "Upload Photo" : "Image Preview"}
+                    </span>
+                  </>
+                )}
+              </button>
+              <input ref={upRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={loading} />
+            </div>
+
+            {imgSource === "url" && (
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
                   Image URL
