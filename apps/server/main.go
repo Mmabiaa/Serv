@@ -97,8 +97,8 @@ func main() {
 			authGroup.POST("/staff/login", auth.StaffLogin)
 			authGroup.POST("/refresh", auth.Refresh)
 			authGroup.POST("/verify-otp", auth.VerifyOTPHandler)
-			authGroup.POST("/password-reset/request", auth.RequestPasswordReset)
-			authGroup.POST("/password-reset/verify", auth.VerifyPasswordReset)
+			authGroup.POST("/pin-reset/request", auth.RequestPINReset)
+			authGroup.POST("/pin-reset/verify", auth.VerifyPINReset)
 		}
 
 		userGroup := v1.Group("/users")

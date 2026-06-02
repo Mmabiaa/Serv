@@ -7,6 +7,7 @@ import (
 	"github.com/serv/server/internal/models"
 	"github.com/serv/server/pkg"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func SeedData() {
@@ -15,13 +16,14 @@ func SeedData() {
 	name := os.Getenv("SEED_MANAGER_NAME")
 	email := os.Getenv("SEED_MANAGER_EMAIL")
 	orgName := os.Getenv("SEED_ORG_NAME")
-	phoneNumber := os.Getenv("SEED_MANAGER_PHONE_NUMBER")
-	businessLocation := os.Getenv("SEED_ORG_BUSINESS_LOCATION")
 
 	if username == "" || pin == "" || name == "" {
 		pkg.Log.Info("Skipping seed: Environment variables not set")
 		return
 	}
+
+	// Hash the PIN for storage
+	hashedPIN, _ := bcrypt.GenerateFromPassword([]byte(pin), bcrypt.DefaultCost)
 
 	// 1. Create Organization if not exists
 	var org models.Organization
@@ -31,11 +33,10 @@ func SeedData() {
 			ID:               uuid.New(),
 			Name:             orgName,
 			ManagerName:      name,
-			PhoneNumber:      phoneNumber,
-			BusinessLocation: businessLocation,
+			PhoneNumber:      "+250780000000",
+			BusinessLocation: "Kigali, Rwanda",
 			ManagerEmail:     email,
-			ManagerPassword:  "initial_password_not_used_in_pin_flow",
-			ManagerPIN:       pin,
+			ManagerPIN:       string(hashedPIN),
 		}
 		if err := DB.Create(&org).Error; err != nil {
 			pkg.Log.Error("Failed to seed organization", zap.Error(err))
@@ -54,7 +55,7 @@ func SeedData() {
 			FullName:       name,
 			Username:       username,
 			Email:          email,
-			PIN:            pin,
+			PIN:            string(hashedPIN),
 			Role:           "admin", // Admin role acts as Manager
 			IsActive:       true,
 		}
