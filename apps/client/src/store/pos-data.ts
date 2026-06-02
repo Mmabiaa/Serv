@@ -8,7 +8,7 @@ export type Product = {
   sku?: string;
   barcode?: string;
   description?: string;
-  imageUrl?: string;
+  image_url?: string;
   emoji?: string; // Keep for UI fallback
 };
 

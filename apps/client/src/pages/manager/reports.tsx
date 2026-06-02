@@ -57,11 +57,11 @@ export function ReportsPage() {
                 <span className="w-6 text-center text-xs font-bold text-muted-foreground font-mono">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <div className="w-10 h-10 rounded-lg bg-muted grid place-items-center text-xl overflow-hidden">
-                  {p.imageUrl ? (
-                    <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
+                <div className="w-10 h-10 rounded-lg bg-muted shrink-0 grid place-items-center text-xl overflow-hidden">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    p.emoji
+                    p.emoji || "📦"
                   )}
                 </div>
                 <div className="flex-1 min-w-0">

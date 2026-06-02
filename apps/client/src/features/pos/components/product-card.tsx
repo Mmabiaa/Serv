@@ -16,19 +16,18 @@ export function ProductCard({ product: p }: ProductCardProps) {
       onClick={() => cartStore.add(p)}
       className="group text-left bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-xl hover:border-primary/50 hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 relative overflow-hidden"
     >
-      <div className="w-full aspect-square bg-muted rounded-xl mb-4 grid place-items-center text-5xl overflow-hidden relative group-hover:shadow-inner transition-all">
-        {p.imageUrl ? (
+      <div className="aspect-square bg-muted grid place-items-center text-5xl overflow-hidden">
+        {p.image_url ? (
           <img
-            src={p.imageUrl}
+            src={p.image_url}
             alt={p.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
         ) : (
-          <span aria-hidden className="group-hover:scale-110 transition-transform duration-500">
+          <span className="group-hover:scale-125 transition-transform duration-500">
             {p.emoji || "📦"}
           </span>
         )}
-        <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors" />
       </div>
 
       <div className="space-y-1">

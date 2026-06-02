@@ -22,8 +22,8 @@ export function QuickAdd({ products }: QuickAddProps) {
             className="flex items-center gap-3 p-3 bg-card border border-border rounded-xl hover:border-primary/50 hover:shadow-md transition-all text-left group"
           >
             <div className="w-8 h-8 rounded-lg bg-muted grid place-items-center text-xl shrink-0 group-hover:scale-110 transition-transform overflow-hidden">
-              {p.imageUrl ? (
-                <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+              {p.image_url ? (
+                <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
               ) : (
                 p.emoji || "📦"
               )}

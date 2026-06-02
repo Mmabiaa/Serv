@@ -63,7 +63,6 @@ func TestAuthFlow(t *testing.T) {
 		PhoneNumber:      "123456789",
 		BusinessLocation: "Test Location",
 		ManagerEmail:     "manager@test.com",
-		ManagerPassword:  "password123",
 		ManagerPIN:       "1234",
 	}
 
@@ -78,8 +77,8 @@ func TestAuthFlow(t *testing.T) {
 
 	// 2. Login with created credentials
 	loginReq := auth.LoginRequest{
-		Email:    "manager@test.com",
-		Password: "password123",
+		Username: "manager@test.com",
+		PIN:      "1234",
 	}
 
 	jsonBytes, _ = json.Marshal(loginReq)

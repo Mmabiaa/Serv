@@ -128,6 +128,8 @@ func main() {
 			// Products
 			inventoryGroup.POST("/products", inventory.CreateProduct)
 			inventoryGroup.GET("/products", inventory.ListProducts)
+			inventoryGroup.PUT("/products/:id", inventory.UpdateProduct)
+			inventoryGroup.DELETE("/products/:id", inventory.DeleteProduct)
 
 			// Stock Movements
 			inventoryGroup.POST("/adjust", inventory.AdjustStock)

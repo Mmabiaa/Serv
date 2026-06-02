@@ -76,8 +76,6 @@ func TestInventoryFlow(t *testing.T) {
 		PhoneNumber:      "123456789",
 		BusinessLocation: "Test Location",
 		ManagerEmail:     "inv@test.com",
-		ManagerPassword:  "password123",
-		ManagerPIN:       "1234",
 	}
 	jsonBytes, _ := json.Marshal(regReq)
 	req, _ := http.NewRequest(http.MethodPost, "/api/v1/auth/register", bytes.NewBuffer(jsonBytes))
@@ -85,7 +83,7 @@ func TestInventoryFlow(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	loginReq := auth.LoginRequest{Email: "inv@test.com", Password: "password123"}
+	loginReq := auth.LoginRequest{Username: "inv@test.com", PIN: "1234"}
 	jsonBytes, _ = json.Marshal(loginReq)
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")

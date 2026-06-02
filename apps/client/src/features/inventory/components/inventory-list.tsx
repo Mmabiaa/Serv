@@ -35,8 +35,8 @@ export function InventoryList({ products, onEdit }: InventoryListProps) {
                 <td className="px-5 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-muted grid place-items-center text-xl overflow-hidden shrink-0">
-                      {p.imageUrl ? (
-                        <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
+                      {p.image_url ? (
+                        <img src={p.image_url} alt="" className="w-full h-full object-cover" />
                       ) : (
                         p.emoji
                       )}

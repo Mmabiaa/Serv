@@ -11,7 +11,7 @@ interface ProductDialogProps {
 }
 
 export function ProductDialog({ product, onClose }: ProductDialogProps) {
-  const [img, setImg] = useState<string | undefined>(product?.imageUrl);
+  const [img, setImg] = useState<string | undefined>(product?.image_url);
   const [imgSource, setImgSource] = useState<"file" | "url">("file");
   const [loading, setLoading] = useState(false);
   const [categoryName, setCategoryName] = useState("");
@@ -55,7 +55,7 @@ export function ProductDialog({ product, onClose }: ProductDialogProps) {
       }
 
       if (product) {
-        await updateProduct({ ...product, name, category_id, price, quantity, imageUrl: finalImg });
+        await updateProduct({ ...product, name, category_id, price, quantity, image_url: finalImg });
         toast.success("Product updated successfully");
       } else {
         await addProduct({
@@ -63,7 +63,7 @@ export function ProductDialog({ product, onClose }: ProductDialogProps) {
           category_id,
           price,
           quantity,
-          imageUrl: finalImg,
+          image_url: finalImg,
         });
         toast.success("Product added successfully");
       }
@@ -155,7 +155,7 @@ export function ProductDialog({ product, onClose }: ProductDialogProps) {
                 <input
                   name="imgUrl"
                   type="url"
-                  defaultValue={product?.imageUrl}
+                  defaultValue={product?.image_url}
                   placeholder="https://example.com/image.png"
                   className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
                   disabled={loading}

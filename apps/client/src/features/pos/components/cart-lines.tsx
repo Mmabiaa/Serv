@@ -21,8 +21,8 @@ export function CartLines() {
           className="p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors"
         >
           <div className="w-12 h-12 rounded-xl bg-muted grid place-items-center text-2xl shrink-0 overflow-hidden shadow-sm">
-            {line.product.imageUrl ? (
-              <img src={line.product.imageUrl} alt="" className="w-full h-full object-cover" />
+            {line.product.image_url ? (
+              <img src={line.product.image_url} alt="" className="w-full h-full object-cover" />
             ) : (
               line.product.emoji
             )}

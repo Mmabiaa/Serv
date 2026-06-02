@@ -109,7 +109,7 @@ func TestReportingFlow(t *testing.T) {
 	router.ServeHTTP(w, req)
 	assert.Equal(t, http.StatusCreated, w.Code)
 
-	loginReq := auth.LoginRequest{Email: "mgr@test.com", Password: "password123"}
+	loginReq := auth.LoginRequest{Username: "mgr@test.com", PIN: "1234"}
 	jsonBytes, _ = json.Marshal(loginReq)
 	req, _ = http.NewRequest(http.MethodPost, "/api/v1/auth/login", bytes.NewBuffer(jsonBytes))
 	req.Header.Set("Content-Type", "application/json")

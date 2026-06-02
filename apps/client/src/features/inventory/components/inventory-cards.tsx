@@ -16,8 +16,8 @@ export function InventoryCards({ products, onEdit }: InventoryCardsProps) {
           className="bg-card border border-border rounded-2xl p-4 shadow-sm group"
         >
           <div className="aspect-square bg-muted rounded-xl mb-4 grid place-items-center text-4xl overflow-hidden relative">
-            {p.imageUrl ? (
-              <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
+            {p.image_url ? (
+              <img src={p.image_url} alt="" className="w-full h-full object-cover" />
             ) : (
               p.emoji
             )}
