@@ -1,5 +1,7 @@
-import { X, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { X, Trash2, Loader2 } from "lucide-react";
 import { addStaff, deleteStaff, updateStaff, type StaffMember } from "@/store/pos-store";
+import { toast } from "sonner";
 
 interface StaffDialogProps {
   dialog: { type: "edit"; member: StaffMember } | { type: "create" };
@@ -7,6 +9,34 @@ interface StaffDialogProps {
 }
 
 export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    const fd = new FormData(e.currentTarget);
+    const fullName = fd.get("name") as string;
+    const username = fd.get("username") as string;
+    const email = fd.get("email") as string;
+    const role = fd.get("role") as "manager" | "cashier";
+    const staff_pin = fd.get("pin") as string;
+
+    try {
+      if (dialog.type === "create") {
+        await addStaff({ full_name: fullName, username, email, role, staff_pin });
+        toast.success("Staff member created successfully");
+      } else {
+        await updateStaff({ ...dialog.member, fullName, role });
+        toast.success("Staff member updated successfully");
+      }
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save staff member");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-foreground/40 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-card w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
@@ -17,31 +47,14 @@ export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 grid place-items-center rounded-full hover:bg-muted text-muted-foreground"
+            disabled={loading}
+            className="w-9 h-9 grid place-items-center rounded-full hover:bg-muted text-muted-foreground disabled:opacity-50"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const fd = new FormData(e.currentTarget);
-            const fullName = fd.get("name") as string;
-            const username = fd.get("username") as string;
-            const email = fd.get("email") as string;
-            const role = fd.get("role") as "manager" | "cashier";
-            const staff_pin = fd.get("pin") as string;
-
-            if (dialog.type === "create") {
-              addStaff({ full_name: fullName, username, email, role, staff_pin });
-            } else {
-              updateStaff({ ...dialog.member, fullName, role });
-            }
-            onClose();
-          }}
-          className="space-y-4"
-        >
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground px-1">
               Full Name
@@ -49,8 +62,9 @@ export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
             <input
               name="name"
               defaultValue={dialog.type === "edit" ? dialog.member.fullName : ""}
-              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10"
+              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
               required
+              disabled={loading}
             />
           </div>
           <div className="space-y-1.5">
@@ -60,8 +74,9 @@ export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
             <input
               name="username"
               defaultValue={dialog.type === "edit" ? dialog.member.username : ""}
-              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10"
+              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
               required
+              disabled={loading}
             />
           </div>
           <div className="space-y-1.5">
@@ -72,8 +87,9 @@ export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
               name="email"
               type="email"
               defaultValue={dialog.type === "edit" ? (dialog.member as any).email : ""}
-              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10"
+              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
               required
+              disabled={loading}
             />
           </div>
           <div className="space-y-1.5">
@@ -83,7 +99,8 @@ export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
             <select
               name="role"
               defaultValue={dialog.type === "edit" ? dialog.member.role : "cashier"}
-              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10"
+              className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
+              disabled={loading}
             >
               <option value="cashier">Cashier</option>
               <option value="manager">Manager</option>
@@ -97,17 +114,46 @@ export function StaffDialog({ dialog, onClose }: StaffDialogProps) {
               <input
                 name="pin"
                 maxLength={4}
-                className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm font-mono focus:outline-none focus:ring-4 focus:ring-primary/10"
+                className="w-full bg-background border border-border rounded-xl px-3 py-3 text-sm font-mono focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50"
                 required
+                disabled={loading}
               />
             </div>
           )}
-          <button
-            type="submit"
-            className="w-full bg-primary text-primary-foreground py-3.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 mt-2"
-          >
-            {dialog.type === "create" ? "Add member" : "Save changes"}
-          </button>
+
+          <div className="pt-4 flex flex-col gap-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary text-primary-foreground py-4 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+              {dialog.type === "create" ? "Create Staff Member" : "Update Details"}
+            </button>
+            {dialog.type === "edit" && (
+              <button
+                type="button"
+                disabled={loading}
+                onClick={async () => {
+                  if (confirm("Deactivate this staff member?")) {
+                    setLoading(true);
+                    try {
+                      await deleteStaff(dialog.member.id);
+                      toast.success("Staff member deactivated");
+                      onClose();
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to deactivate");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }
+                }}
+                className="w-full bg-rose-50 text-rose-600 py-4 rounded-xl font-bold text-sm hover:bg-rose-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Trash2 className="w-4 h-4" /> Deactivate Staff
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

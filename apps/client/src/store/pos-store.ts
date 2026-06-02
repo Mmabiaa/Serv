@@ -51,6 +51,19 @@ export type StaffPerformance = {
   total_orders: number;
 };
 
+export type Movement = {
+  id: string;
+  product_id: string;
+  user_id: string;
+  type: string;
+  quantity: number;
+  previous_qty: number;
+  new_qty: number;
+  reason: string;
+  reference_id?: string;
+  created_at: string;
+};
+
 interface PosState {
   products: Product[];
   categories: Category[];
@@ -59,6 +72,7 @@ interface PosState {
   transactions: Transaction[];
   dailyReports: DailyReport[];
   staffPerformance: StaffPerformance[];
+  movements: Movement[];
   isLoading: boolean;
   error: string | null;
   
@@ -69,6 +83,7 @@ interface PosState {
   fetchCustomers: () => Promise<void>;
   fetchTransactions: () => Promise<void>;
   fetchReports: () => Promise<void>;
+  fetchMovements: () => Promise<void>;
 
   addProduct: (p: any) => Promise<void>;
   updateProduct: (p: Product) => Promise<void>;
@@ -92,6 +107,7 @@ export const usePosStore = create<PosState>()(
       transactions: [],
       dailyReports: [],
       staffPerformance: [],
+      movements: [],
       isLoading: false,
       error: null,
 
@@ -159,6 +175,16 @@ export const usePosStore = create<PosState>()(
           });
         } catch (err: any) {
           console.error("Failed to fetch reports:", err);
+        }
+      },
+
+      fetchMovements: async () => {
+        set({ isLoading: true });
+        try {
+          const movements = await api.get<Movement[]>("/inventory/movements?limit=100");
+          set({ movements: movements || [], isLoading: false });
+        } catch (err: any) {
+          set({ error: err.message, isLoading: false });
         }
       },
 
@@ -275,8 +301,16 @@ export const useCategories = () => usePosStore((state) => state.categories);
 export const useCustomers = () => usePosStore((state) => state.customers);
 export const useStaff = () => usePosStore((state) => state.staff);
 export const useTransactions = () => usePosStore((state) => state.transactions);
-export const useDailyReports = () => usePosStore((state) => state.dailyReports);
-export const useStaffPerformance = () => usePosStore((state) => state.staffPerformance);
+export const useDailyReports = () => usePosStore((state) => state.dailyReports || []);
+export const useStaffPerformance = () => usePosStore((state) => state.staffPerformance || []);
+export const useMovements = () => usePosStore(useShallow((state) => {
+  const { movements, products, staff } = state;
+  return (movements || []).map(m => ({
+    ...m,
+    product_name: products.find(p => p.id === m.product_id)?.name || "Unknown Product",
+    staff_name: staff.find(s => s.id === m.user_id)?.fullName || "Unknown Staff"
+  }));
+}));
 export const usePosLoading = () => usePosStore((state) => state.isLoading);
 export const usePosError = () => usePosStore((state) => state.error);
 
@@ -296,4 +330,5 @@ export const fetchStaff = () => usePosStore.getState().fetchStaff();
 export const fetchCustomers = () => usePosStore.getState().fetchCustomers();
 export const fetchTransactions = () => usePosStore.getState().fetchTransactions();
 export const fetchReports = () => usePosStore.getState().fetchReports();
+export const fetchMovements = () => usePosStore.getState().fetchMovements();
 export const checkout = (data: any) => usePosStore.getState().checkout(data);
